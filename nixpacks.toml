@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+[build]
+builder = "nixpacks"
+
+>>>>>>> 128c8ffa2de09eda55995eb2c8b57858516ddf55
 [providers.node]
 version = "20"
 
@@ -11,4 +17,8 @@ cmds = ["npm ci --no-audit --no-fund || npm install --no-audit --no-fund"]
 cmds = ["npm run build"]
 
 [start]
+<<<<<<< HEAD
 cmd = "serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"
+=======
+cmd = "npx serve -s dist -l tcp://0.0.0.0:${PORT:-3000}"
+>>>>>>> 128c8ffa2de09eda55995eb2c8b57858516ddf55
