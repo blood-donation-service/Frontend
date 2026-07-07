@@ -77,22 +77,15 @@ function Register() {
 
       setIsRegistering(true);
 
-      const staffPayload = {
-        first_name: data.first_name_staff,
-        last_name: data.last_name_staff,
-        national_code: data.national_code_staff,
-        phone: data.phone_staff,
-        center_id: data.center_id,
-        password: data.password,
-      };
-
       const response =
         registerRole === "donor"
           ? await api.post("/auth/register/donor/", data)
-          : await api.post("/api/auth/register/staff/", staffPayload);
+          : await api.post("/auth/register/staff/", data);
+
       // if (response.data.token) {
       //   setAuthCookie(response.data.token);
       // }
+
       if (registerRole === "donor") {
         const newDonor = {
           id: String(response.data.user.id),
@@ -107,7 +100,6 @@ function Register() {
           canDonate: true,
           lockoutUntil: null,
         };
-
         dispatch(specifyUserInfo(newDonor));
         navigate("/login");
         dispatch(
@@ -118,11 +110,20 @@ function Register() {
           ),
         );
       } else {
+        const newStaff = {
+          id: String(response.data.id),
+          firstName: response.data.first_name,
+          lastName: response.data.last_name,
+          nationalCode: response.data.national_code,
+          phone: response.data.phone_number,
+          centerId: response.data.medical_center.center_id,
+        };
+        dispatch(specifyUserInfo(newStaff));
         navigate("/login");
         dispatch(
           showToast(
             "ثبت مرکز درمانی موفقیت‌آمیز بود",
-            "اکنون با حساب کاربری مرکز درمانی وارد شوید.",
+            `${response.data.medical_center.name} با موفقیت ثبت شد. اکنون وارد شوید.`,
             "success",
           ),
         );
@@ -222,11 +223,18 @@ function Register() {
       return false;
     }
 
-    if (staffRegForm.phone.length !== 8) {
+    if (staffRegForm.phone.length !== 11) {
+      dispatch(
+        showToast("خطای شماره تلفن", "شماره تلفن باید 11 رقم باشد", "error"),
+      );
+      return false;
+    }
+
+    if (!staffRegForm.phone.startsWith("09")) {
       dispatch(
         showToast(
-          "خطای شماره تلفن",
-          "شماره تلفن ثابت باید 8 رقم باشد",
+          "خطای شماره موبایل",
+          "شماره موبایل باید با 09 شروع شود",
           "error",
         ),
       );
@@ -497,7 +505,7 @@ function Register() {
                   type="text"
                   placeholder="مثال: علی"
                   value={staffRegForm.firstName}
-                  {...register("first_name_staff", {
+                  {...register("first_name", {
                     required: "نام الزامی است",
                   })}
                   onChange={(e) => {
@@ -505,7 +513,7 @@ function Register() {
                       ...prev,
                       firstName: e.target.value,
                     }));
-                    setValue("first_name_staff", e.target.value, {
+                    setValue("first_name", e.target.value, {
                       shouldValidate: true,
                     });
                   }}
@@ -523,7 +531,7 @@ function Register() {
                   type="text"
                   placeholder="مثال: اکبری"
                   value={staffRegForm.lastName}
-                  {...register("last_name_staff", {
+                  {...register("last_name", {
                     required: "نام خانوادگی الزامی است",
                   })}
                   onChange={(e) => {
@@ -531,7 +539,7 @@ function Register() {
                       ...prev,
                       lastName: e.target.value,
                     }));
-                    setValue("last_name_staff", e.target.value, {
+                    setValue("last_name", e.target.value, {
                       shouldValidate: true,
                     });
                   }}
@@ -550,7 +558,7 @@ function Register() {
                   placeholder="۱۰ رقم"
                   maxLength={10}
                   value={staffRegForm.nationalCode}
-                  {...register("national_code_staff", {
+                  {...register("national_code", {
                     required: "کد ملی الزامی است",
                   })}
                   onChange={(e) => {
@@ -559,7 +567,7 @@ function Register() {
                         ...prev,
                         nationalCode: e.target.value,
                       }));
-                      setValue("national_code_staff", e.target.value, {
+                      setValue("national_code", e.target.value, {
                         shouldValidate: true,
                       });
                     }
@@ -577,9 +585,9 @@ function Register() {
                 <input
                   type="text"
                   placeholder="مثال: 61190000"
-                  maxLength={8}
+                  maxLength={11}
                   value={staffRegForm.phone}
-                  {...register("phone_staff", {
+                  {...register("mobile_number", {
                     required: "شماره تلفن الزامی است",
                   })}
                   onChange={(e) => {
@@ -588,7 +596,7 @@ function Register() {
                         ...prev,
                         phone: e.target.value,
                       }));
-                      setValue("phone_staff", e.target.value, {
+                      setValue("mobile_number", e.target.value, {
                         shouldValidate: true,
                       });
                     }

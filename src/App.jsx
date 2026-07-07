@@ -35,27 +35,6 @@ const NewRequest = lazy(() =>
   import("./features/staff/NewRequest").then((m) => ({ default: m.default })),
 );
 
-const PRE_DEFINED_HOSPITALS = {
-  "H-110": {
-    name: "بیمارستان امام خمینی",
-    address: "تهران، انتهای بلوار کشاورز",
-    postalCode: "1419733141",
-    phone: "021-61190000",
-  },
-  "H-120": {
-    name: "بیمارستان شریعتی",
-    address: "تهران، خیابان کارگر شمالی، تقاطع جلال آل احمد",
-    postalCode: "1411713135",
-    phone: "021-84901000",
-  },
-  "H-130": {
-    name: "بیمارستان سینا",
-    address: "تهران، میدان امام خمینی، خیابان امام خمینی",
-    postalCode: "1136746911",
-    phone: "021-66701041",
-  },
-};
-
 function RouteFallback({ variant }) {
   return <PageLoader variant={variant} />;
 }
@@ -86,7 +65,7 @@ export default function App() {
               path="login"
               element={
                 <Suspense fallback={<RouteFallback variant="login" />}>
-                  <Login PRE_DEFINED_HOSPITALS={PRE_DEFINED_HOSPITALS} />
+                  <Login />
                 </Suspense>
               }
             />
@@ -94,7 +73,7 @@ export default function App() {
               path="register"
               element={
                 <Suspense fallback={<RouteFallback variant="register" />}>
-                  <Register PRE_DEFINED_HOSPITALS={PRE_DEFINED_HOSPITALS} />
+                  <Register />
                 </Suspense>
               }
             />

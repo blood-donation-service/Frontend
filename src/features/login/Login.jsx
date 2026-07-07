@@ -9,7 +9,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
 
-export default function Login({ PRE_DEFINED_HOSPITALS }) {
+export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { loginForm, userRole } = useSelector((store) => store.app);
@@ -42,16 +42,14 @@ export default function Login({ PRE_DEFINED_HOSPITALS }) {
         showToast("خوش آمدید", `به عنوان اهداکننده وارد شدید.`, "success"),
       );
     } else {
+      const centerId = (loginForm.id || "CTR-110").toUpperCase();
       const mockStaff = {
-        id: loginForm.id || "H-110",
-        name:
-          PRE_DEFINED_HOSPITALS[loginForm.id]?.name || "بیمارستان امام خمینی",
-        address:
-          PRE_DEFINED_HOSPITALS[loginForm.id]?.address ||
-          "تهران، انتهای بلوار کشاورز",
-        phone: PRE_DEFINED_HOSPITALS[loginForm.id]?.phone || "61190000",
-        postalCode:
-          PRE_DEFINED_HOSPITALS[loginForm.id]?.postalCode || "1419733141",
+        id: centerId,
+        firstName: "علیرضا",
+        lastName: "رضایی",
+        nationalCode: "0012345678",
+        phone: "61190000",
+        centerId: centerId,
       };
       setIsLogining(true);
       dispatch(specifyUserInfo(mockStaff));
@@ -61,7 +59,7 @@ export default function Login({ PRE_DEFINED_HOSPITALS }) {
       dispatch(
         showToast(
           "ورود موفقیت‌آمیز مسئول",
-          `وارد پنل مدیریت ${mockStaff.name} شدید.`,
+          `وارد پنل مدیریت مرکز ${centerId} شدید.`,
           "success",
         ),
       );
@@ -148,7 +146,7 @@ export default function Login({ PRE_DEFINED_HOSPITALS }) {
               </label>
               <input
                 type="text"
-                placeholder="شناسه های نمونه: H-110 یا H-120"
+                placeholder="شناسه نمونه: CTR-110 یا CTR-120"
                 value={loginForm.id}
                 onChange={(e) =>
                   dispatch(
