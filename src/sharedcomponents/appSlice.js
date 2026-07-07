@@ -8,7 +8,7 @@ const INITIAL_NEEDS = [
   {
     id: "need-1",
     title: "نیاز مبرم به خون O+ جهت عمل جراحی قلب اورژانسی",
-    hospitalId: "H-110",
+    centerId: "CTR-110",
     hospitalName: "بیمارستان امام خمینی",
     needType: "خون کامل",
     bloodTypeRequired: "O+",
@@ -23,7 +23,7 @@ const INITIAL_NEEDS = [
   {
     id: "need-2",
     title: "درخواست فوری پلاکت A- برای بیمار بخش آنکولوژی",
-    hospitalId: "H-120",
+    centerId: "CTR-120",
     hospitalName: "بیمارستان شریعتی",
     needType: "پلاکت",
     bloodTypeRequired: "A-",
@@ -38,7 +38,7 @@ const INITIAL_NEEDS = [
   {
     id: "need-3",
     title: "کمبود شدید کیسه پلاسمای B+ جهت بیماران سوانح و سوختگی",
-    hospitalId: "H-130",
+    centerId: "CTR-130",
     hospitalName: "بیمارستان سینا",
     needType: "پلاسما",
     bloodTypeRequired: "B+",
@@ -53,7 +53,7 @@ const INITIAL_NEEDS = [
   {
     id: "need-4",
     title: "نیاز فوری به خون AB- برای مادر باردار در اتاق عمل",
-    hospitalId: "H-110",
+    centerId: "CTR-110",
     hospitalName: "بیمارستان امام خمینی",
     needType: "خون کامل",
     bloodTypeRequired: "AB-",
@@ -235,16 +235,17 @@ export function handleConfirmDonation(resId) {
 // Quick login helpers for Demo/Guest state
 export function quickLoginAsStaff() {
   const mockStaff = {
-    id: "H-110",
-    name: "بیمارستان امام خمینی (نمونه)",
-    address: "تهران، انتهای بلوار کشاورز",
-    phone: "021-61190000",
-    postalCode: "1419733141",
+    id: "CTR-110",
+    firstName: "علیرضا",
+    lastName: "رضایی",
+    nationalCode: "0012345678",
+    phone: "61190000",
+    centerId: "CTR-110",
   };
 
   return async function (dispatch) {
     dispatch(specifyUserInfo(mockStaff));
-    dispatch(setUserRole(null));
+    dispatch(setUserRole("staff"));
     dispatch(
       showToast(
         "ورود سریع کادر درمان",
@@ -293,17 +294,15 @@ export function handleCreateNeed(newNeedForm, navigate) {
       return;
     }
 
-    const hospitalId = getState().app.currentUser?.id || "H-110";
-    const hospitalName =
-      getState().app.currentUser?.name || "بیمارستان امام خمینی (مهمان)";
+    const centerId = getState().app.currentUser?.id || "CTR-110";
     const phone = getState().app.currentUser?.phone || "021-61190000";
-    const address =
-      getState().app.currentUser?.address || "تهران، انتهای بلوار کشاورز";
+    const address = "تهران، انتهای بلوار کشاورز";
+    const hospitalName = "بیمارستان امام خمینی (مهمان)";
 
     const newNeed = {
       id: "need-" + Date.now(),
       title: newNeedForm.title,
-      hospitalId: hospitalId,
+      centerId: centerId,
       hospitalName: hospitalName,
       needType: newNeedForm.needType,
       bloodTypeRequired: newNeedForm.bloodTypeRequired,

@@ -40,11 +40,11 @@ export default function StaffDashboard() {
             </div>
             <div>
               <h4 className="text-sm font-bold text-blue-900">
-                حالت نمایشی بیمارستان فعال است (H-110 - امام خمینی)
+                حالت نمایشی مرکز فعال است (CTR-110 - امام خمینی)
               </h4>
               <p className="mt-1 max-w-2xl text-xs text-blue-700">
                 شما بدون وارد شدن به عنوان کادر درمان می‌توانید درخواست‌ها و
-                لیست رزروهای بیمارستان امام خمینی را مدیریت کنید. برای شبیه‌سازی
+                لیست رزروهای مرکز امام خمینی را مدیریت کنید. برای شبیه‌سازی
                 با دسترسی اختصاصی‌تر، روی دکمه شبیه‌سازی ورود سریع کادر درمان
                 کلیک کنید.
               </p>
@@ -66,11 +66,14 @@ export default function StaffDashboard() {
             پنل هماهنگی بحران بیمارستانی
           </span>
           <h2 className="mt-0.5 text-xl font-black text-slate-900">
-            {currentUser?.name || "بیمارستان امام خمینی (مهمان)"}
+            {currentUser?.firstName
+              ? `${currentUser.firstName} ${currentUser.lastName}`
+              : "مرکز درمانی (مهمان)"}
           </h2>
           <p className="mt-1 text-xs text-slate-400">
-            شناسه مرکز: <b>{currentUser?.id || "H-110"}</b> | آدرس مرکز:{" "}
-            <b>{currentUser?.address || "تهران، انتهای بلوار کشاورز"}</b>
+            شناسه مرکز: <b>{currentUser?.centerId || currentUser?.id || "CTR-110"}</b>{" "}
+            | کد ملی:{" "}
+            <b>{currentUser?.nationalCode || "—"}</b>
           </p>
         </div>
 
@@ -101,8 +104,9 @@ export default function StaffDashboard() {
           درخواست‌های فعال ثبت شده توسط مرکز شما
         </h3>
 
-        {needs.filter((n) => n.hospitalId === (currentUser?.id || "H-110"))
-          .length === 0 ? (
+        {needs.filter(
+          (n) => n.centerId === (currentUser?.centerId || currentUser?.id || "CTR-110"),
+        ).length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <span className="text-4xl">🏥</span>
             <p className="text-xs font-bold text-slate-400">
@@ -118,7 +122,10 @@ export default function StaffDashboard() {
         ) : (
           <div className="flex flex-col gap-6">
             {needs
-              .filter((n) => n.hospitalId === (currentUser?.id || "H-110"))
+              .filter(
+                (n) =>
+                  n.centerId === (currentUser?.centerId || currentUser?.id || "CTR-110"),
+              )
               .map((need) => {
                 const pendingReservations = reservations.filter(
                   (r) => r.medicalNeedId === need.id,
