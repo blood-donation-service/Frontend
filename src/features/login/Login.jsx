@@ -1,17 +1,79 @@
-import { Link, useNavigate } from "react-router-dom";
-import { handleLogin, updateLoginForm } from "../../sharedcomponents/appSlice";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import {
+  setRegisterRole,
+  setUserRole,
+  showToast,
+  specifyUserInfo,
+  updateLoginForm,
+} from "../../sharedcomponents/appSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 
-export default function Login() {
+export default function Login({ PRE_DEFINED_HOSPITALS }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { loginForm } = useSelector((store) => store.app);
+  const { loginForm, userRole } = useSelector((store) => store.app);
+
+  const [isLogining, setIsLogining] = useState(false);
+
+  // Authenticate user
+  function handleLogin(navigate) {
+    if (loginForm.role === "donor") {
+      if (loginForm.id.length !== 10) {
+        dispatch(showToast("خطا در ورود", "کد ملی باید ۱۰ رقم باشد.", "error"));
+        return;
+      }
+      const mockDonor = {
+        id: "donor-1",
+        name: "علیرضا رضایی",
+        nationalId: loginForm.id,
+        bloodType: "O+",
+        province: "تهران",
+        mobile: "09121111111",
+        canDonate: true,
+        lockoutUntil: null,
+      };
+      setIsLogining(true);
+      dispatch(specifyUserInfo(mockDonor));
+      dispatch(setUserRole("donor"));
+      navigate("/donor-dashboard");
+      setIsLogining(false);
+      dispatch(
+        showToast("خوش آمدید", `به عنوان اهداکننده وارد شدید.`, "success"),
+      );
+    } else {
+      const mockStaff = {
+        id: loginForm.id || "H-110",
+        name:
+          PRE_DEFINED_HOSPITALS[loginForm.id]?.name || "بیمارستان امام خمینی",
+        address:
+          PRE_DEFINED_HOSPITALS[loginForm.id]?.address ||
+          "تهران، انتهای بلوار کشاورز",
+        phone: PRE_DEFINED_HOSPITALS[loginForm.id]?.phone || "61190000",
+        postalCode:
+          PRE_DEFINED_HOSPITALS[loginForm.id]?.postalCode || "1419733141",
+      };
+      setIsLogining(true);
+      dispatch(specifyUserInfo(mockStaff));
+      dispatch(setUserRole("staff"));
+      navigate("/staff-dashboard");
+      setIsLogining(false);
+      dispatch(
+        showToast(
+          "ورود موفقیت‌آمیز مسئول",
+          `وارد پنل مدیریت ${mockStaff.name} شدید.`,
+          "success",
+        ),
+      );
+    }
+  }
 
   {
     /* ==========================================
             VIEW: AUTHENTICATION (LOGIN)
             ========================================== */
   }
+  if (userRole !== null) return <Navigate to="/" replace />;
   return (
     <div className="flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">
@@ -27,18 +89,22 @@ export default function Login() {
         {/* Role Picker Tabs */}
         <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-50 p-1">
           <button
+            disabled={isLogining}
             onClick={() =>
+              loginForm.role === "staff" &&
               dispatch(updateLoginForm({ ...loginForm, role: "donor" }))
             }
-            className={`rounded-xl py-2.5 text-xs font-bold transition-all ${loginForm.role === "donor" ? "bg-white text-rose-600 shadow" : "text-slate-400 hover:text-slate-700"}`}
+            className={`rounded-xl py-2.5 text-xs font-bold transition-all ${loginForm.role === "donor" ? "bg-white text-rose-600 shadow" : isLogining ? "cursor-wait text-slate-400" : "cursor-pointer text-slate-400 hover:text-slate-700"}`}
           >
             داوطلب اهداکننده
           </button>
           <button
+            disabled={isLogining}
             onClick={() =>
+              loginForm.role === "donor" &&
               dispatch(updateLoginForm({ ...loginForm, role: "staff" }))
             }
-            className={`rounded-xl py-2.5 text-xs font-bold transition-all ${loginForm.role === "staff" ? "bg-white text-rose-600 shadow" : "text-slate-400 hover:text-slate-700"}`}
+            className={`rounded-xl py-2.5 text-xs font-bold transition-all ${loginForm.role === "staff" ? "bg-white text-rose-600 shadow" : isLogining ? "cursor-wait text-slate-400" : "cursor-pointer text-slate-400 hover:text-slate-700"}`}
           >
             کادر درمان / بیمارستان
           </button>
@@ -61,15 +127,17 @@ export default function Login() {
                 placeholder="نمونه: 1234567890"
                 value={loginForm.id}
                 maxLength={10}
-                onChange={(e) => {
+                onChange={(e) =>
+                  e.target.value >= 0 &&
                   dispatch(
                     updateLoginForm({
                       ...loginForm,
                       id: e.target.value,
                     }),
-                  );
-                }}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm transition-all focus:border-rose-500 focus:bg-white focus:outline-none"
+                  )
+                }
+                className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm transition-all focus:border-rose-500 focus:bg-white focus:outline-none ${isLogining ? "cursor-wait" : ""}`}
+                disabled={isLogining}
                 required
               />
             </div>
@@ -90,7 +158,8 @@ export default function Login() {
                     }),
                   )
                 }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm transition-all focus:border-rose-500 focus:bg-white focus:outline-none"
+                className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm transition-all focus:border-rose-500 focus:bg-white focus:outline-none ${isLogining ? "cursor-wait" : ""}`}
+                disabled={isLogining}
                 required
               />
             </div>
@@ -110,24 +179,42 @@ export default function Login() {
                   }),
                 )
               }
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm transition-all focus:border-rose-500 focus:bg-white focus:outline-none"
+              className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm transition-all focus:border-rose-500 focus:bg-white focus:outline-none ${isLogining ? "cursor-wait" : ""}`}
+              disabled={isLogining}
               required
             />
           </div>
 
           <button
             type="submit"
-            className="mt-4 w-full rounded-xl bg-rose-600 py-3.5 text-sm font-black text-white shadow-md transition-all hover:bg-rose-700 active:scale-95"
+            disabled={isLogining}
+            className={`mt-4 flex w-full place-content-center gap-2 rounded-xl py-3.5 text-sm font-black transition-all ${
+              isLogining
+                ? "cursor-wait bg-rose-100 text-rose-500 shadow-sm"
+                : "cursor-pointer bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
+            }`}
           >
-            ورود به سیستم
+            {!isLogining && "ورود به سیستم"}
+            {isLogining && (
+              <>
+                <span>در حال ورود...</span>
+                <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>
+              </>
+            )}
           </button>
         </form>
 
         <div className="mt-6 text-center">
           <span className="text-xs text-slate-400">حسابی ندارید؟ </span>
           <Link
-            to={`${loginForm.role === "donor" ? "/donor-reg" : "/staff-reg"}`}
-            className="cursor-pointer text-xs font-bold text-rose-600 hover:underline"
+            to={isLogining ? "" : "/register"}
+            onClick={() =>
+              !isLogining &&
+              (loginForm.role === "donor"
+                ? dispatch(setRegisterRole("donor"))
+                : dispatch(setRegisterRole("staff")))
+            }
+            className={`text-xs font-bold text-rose-600 ${isLogining ? "cursor-wait" : "cursor-pointer hover:underline"}`}
           >
             ثبت نام کنید
           </Link>

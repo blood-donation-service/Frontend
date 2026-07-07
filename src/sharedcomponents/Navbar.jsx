@@ -1,6 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { handleLogout, updateLoginForm } from "./appSlice";
+import { handleLogout, setRegisterRole, updateLoginForm } from "./appSlice";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ export default function Navbar() {
               to={"/donor-dashboard"}
               className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${pathname === "/donor-dashboard" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
             >
-              داشبورد اهداکننده
+              لیست درخواست های اهدای خون
             </NavLink>
             <NavLink
               to={"/staff-dashboard"}
@@ -79,7 +79,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {currentUser ? (
+            {userRole !== null ? (
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col text-left lg:flex">
                   <span className="text-right text-xs text-slate-400">
@@ -111,20 +111,21 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    dispatch(updateLoginForm({ ...loginForm, role: "donor" }));
-                    navigate("/login");
-                  }}
+                <Link
+                  to={"/login"}
+                  onClick={() =>
+                    dispatch(updateLoginForm({ ...loginForm, role: "donor" }))
+                  }
                   className="px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:cursor-pointer hover:text-slate-900"
                 >
                   ورود کاربران
-                </button>
+                </Link>
                 <Link
-                  to={"/donor-reg"}
+                  to={"/register"}
+                  onClick={() => dispatch(setRegisterRole("donor"))}
                   className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-black text-white shadow-md shadow-rose-600/15 transition-all hover:bg-rose-700 active:scale-95"
                 >
-                  عضویت اهداکنندگان
+                  عضویت اهداکنندگان/مراکز درمانی
                 </Link>
               </div>
             )}

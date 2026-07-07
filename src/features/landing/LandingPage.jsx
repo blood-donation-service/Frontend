@@ -1,10 +1,17 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import { handleReserve } from "../../sharedcomponents/appSlice";
+import {
+  handleReserve,
+  showToast,
+  updateLoginForm,
+} from "../../sharedcomponents/appSlice";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
-  const { needs } = useSelector((store) => store.app);
+  const { needs, loginForm, userRole, isReserving } = useSelector(
+    (store) => store.app,
+  );
+
   {
     /* ==========================================
             VIEW: LANDING PAGE
@@ -13,27 +20,29 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col items-center gap-16 px-4 py-12 md:py-20">
       {/* Urgent Notification Banner */}
-      <div className="animate-fade-in flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-3 w-3">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75"></span>
-            <span className="relative inline-flex h-3 w-3 rounded-full bg-rose-500"></span>
-          </span>
-          <span className="text-sm font-extrabold text-slate-800">
-            اعلان اضطراری زمان واقعی:
-          </span>
-          <span className="hidden text-xs text-slate-500 lg:inline">
-            نیاز شدید به خون گروه A- در بیمارستان شریعتی تهران. با اهدای فوری
-            نجات‌دهنده باشید!
-          </span>
+      {(!userRole || userRole === "donor") && (
+        <div className="animate-fade-in flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-rose-500"></span>
+            </span>
+            <span className="text-sm font-extrabold text-slate-800">
+              اعلان اضطراری زمان واقعی:
+            </span>
+            <span className="hidden text-xs text-slate-500 lg:inline">
+              نیاز شدید به خون گروه A- در بیمارستان شریعتی تهران. با اهدای فوری
+              نجات‌دهنده باشید!
+            </span>
+          </div>
+          <Link
+            to={isReserving ? "" : "/donor-dashboard"}
+            className={`rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-extrabold text-white transition-colors ${isReserving ? "cursor-wait" : "hover:bg-rose-700"}`}
+          >
+            مشاهده و رزرو اهدا
+          </Link>
         </div>
-        <Link
-          to={"/donor-dashboard"}
-          className="rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-extrabold text-white transition-colors hover:bg-rose-700"
-        >
-          مشاهده و رزرو اهدا
-        </Link>
-      </div>
+      )}
 
       {/* HERO SECTION */}
       <div className="flex max-w-5xl flex-col items-center gap-6 text-center">
@@ -48,18 +57,34 @@ export default function LandingPage() {
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-          <Link
-            to={"/donor-dashboard"}
-            className="rounded-2xl bg-rose-600 px-8 py-4 text-sm font-extrabold text-white shadow-xl shadow-rose-600/20 transition-all hover:bg-rose-700 active:scale-95"
-          >
-            ورود مستقیم به بخش رزرو اهدا (بدون نیاز به لاگین)
-          </Link>
-          <Link
-            to={"/staff-dashboard"}
-            className="rounded-2xl border border-slate-200 bg-white px-8 py-4 text-sm font-extrabold text-slate-700 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
-          >
-            ورود مستقیم به پنل کادر درمان
-          </Link>
+          {(userRole === "donor" || !userRole) && (
+            <Link
+              to={isReserving ? "" : "/donor-dashboard"}
+              className={`rounded-2xl bg-rose-600 px-8 py-4 text-sm font-extrabold text-white shadow-xl shadow-rose-600/20 transition-all active:scale-95 ${isReserving ? "cursor-wait" : "hover:bg-rose-700"}`}
+            >
+              ورود به بخش رزرو اهدای خون
+            </Link>
+          )}
+          {(userRole === "staff" || !userRole) && (
+            <Link
+              to={`${!isReserving ? (!userRole ? "/login" : "/staff-dashboard") : ""}`}
+              onClick={() => {
+                if (!userRole) {
+                  dispatch(
+                    showToast(
+                      "توجه",
+                      "برای ورود به پنل کادر درمان ابتدا وارد حساب کاربری خود شوید",
+                      "info",
+                    ),
+                  );
+                  dispatch(updateLoginForm({ ...loginForm, role: "staff" }));
+                }
+              }}
+              className={`${userRole === "staff" ? "bg-rose-600 text-white shadow-xl shadow-rose-600/20 hover:bg-rose-700" : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"} rounded-2xl px-8 py-4 text-sm font-extrabold transition-all active:scale-95 ${isReserving ? "cursor-wait" : ""}`}
+            >
+              ورود به پنل کادر درمان
+            </Link>
+          )}
         </div>
       </div>
 
@@ -79,8 +104,8 @@ export default function LandingPage() {
             </p>
           </div>
           <Link
-            to={"/donor-dashboard"}
-            className="flex items-center gap-1 text-xs font-extrabold text-rose-600 hover:text-rose-700"
+            to={isReserving ? "" : "/donor-dashboard"}
+            className={`flex items-center gap-1 text-xs font-extrabold text-rose-600 ${isReserving ? "cursor-wait" : "hover:text-rose-700"}`}
           >
             <span>نمایش همه در نقشه تعاملی</span>
             <span>←</span>
@@ -94,7 +119,11 @@ export default function LandingPage() {
             .map((need) => {
               const percentLeft =
                 (need.quantityRemaining / need.quantityRequired) * 100;
-              const isCritical = need.quantityRemaining === 1;
+              const isCritical =
+                need.quantityRemaining === 1 && need.status === "active";
+              const isClosed =
+                need.quantityRemaining === 0 || need.status === "completed";
+              const isExpired = need.status === "expired";
 
               return (
                 <div
@@ -118,7 +147,7 @@ export default function LandingPage() {
                         <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
                           <span>🏥 {need.hospitalName}</span>
                           <span>•</span>
-                          <span>📍 {need.region}</span>
+                          <span>📍 {need.province}</span>
                         </p>
                       </div>
                     </div>
@@ -147,16 +176,56 @@ export default function LandingPage() {
                     <span className="text-[10px] text-slate-400">
                       {need.quantityRemaining} واحد مورد نیاز باقی‌مانده
                     </span>
-                    <button
-                      onClick={() => {
-                        // If guest, auto perform reservation as a guest seamlessly
-                        console.log(need.id);
-                        dispatch(handleReserve(need.id));
-                      }}
-                      className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:bg-rose-700 active:scale-95"
-                    >
-                      رزرو سریع نوبت اهدا
-                    </button>
+                    {(!userRole || userRole === "donor") && (
+                      <Link
+                        to={`${!userRole ? "/login" : ""}`}
+                        onClick={() => {
+                          !userRole
+                            ? dispatch(
+                                showToast(
+                                  "توجه",
+                                  "برای رزرو نوبت اهدای خون ابتدا وارد حساب کاربری خود شوید",
+                                  "info",
+                                ),
+                              )
+                            : !isReserving &&
+                              !isClosed &&
+                              !isExpired &&
+                              dispatch(handleReserve(need.id));
+                        }}
+                        className={`flex gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
+                          isClosed || isExpired
+                            ? "cursor-not-allowed bg-slate-100 text-slate-400 shadow-sm"
+                            : isReserving
+                              ? "cursor-wait bg-rose-100 text-rose-500 shadow-sm"
+                              : "bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
+                        }`}
+                      >
+                        {isReserving && !isClosed && !isExpired ? (
+                          <>
+                            <span>در حال رزرو...</span>
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>
+                          </>
+                        ) : (
+                          <>
+                            <span>رزرو ظرفیت اهدای خون</span>
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2.5}
+                                d="M12 4v16m8-8H4"
+                              />
+                            </svg>
+                          </>
+                        )}
+                      </Link>
+                    )}
                   </div>
                 </div>
               );
@@ -225,7 +294,7 @@ export default function LandingPage() {
             bg: "bg-rose-50 text-rose-600",
           },
           {
-            label: "اهدای موفق (سیستم اتمیک)",
+            label: "اهدای موفق",
             value: "۸۴۹ مورد",
             icon: "shield",
             bg: "bg-amber-50 text-amber-600",
