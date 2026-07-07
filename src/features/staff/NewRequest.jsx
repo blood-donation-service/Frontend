@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { handleCreateNeed } from "../../sharedcomponents/appSlice";
 import { useDispatch } from "react-redux";
+import { IRAN_PROVINCES } from "../../sharedcomponents/iranProvinces";
 
 export default function NewRequest() {
   const navigate = useNavigate();
@@ -12,7 +13,7 @@ export default function NewRequest() {
     needType: "خون کامل",
     bloodTypeRequired: "O+",
     quantityRequired: 2,
-    region: "تهران - مرکز",
+    province: "تهران",
   });
 
   {
@@ -130,22 +131,24 @@ export default function NewRequest() {
 
             <div>
               <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                منطقه اورژانس
+                استان
               </label>
               <select
-                value={newNeedForm.region}
+                value={newNeedForm.province}
                 onChange={(e) =>
                   setNewNeedForm((prev) => ({
                     ...prev,
-                    region: e.target.value,
+                    province: e.target.value,
                   }))
                 }
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs focus:border-rose-500 focus:outline-none"
                 required
               >
-                <option value="تهران - مرکز">تهران - مرکز</option>
-                <option value="تهران - شمال">تهران - شمال</option>
-                <option value="تهران - جنوب">تهران - جنوب</option>
+                {IRAN_PROVINCES.map((province) => (
+                  <option key={province} value={province}>
+                    {province}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

@@ -48,8 +48,8 @@ export default function DonorProfile() {
               value: currentUser?.mobile || "۰۹۱۲۱۱۱۱۱۱۱",
             },
             {
-              label: "منطقه سکونت",
-              value: currentUser?.region || "تهران - مرکز",
+              label: "استان محل سکونت",
+              value: currentUser?.province || "تهران",
             },
             {
               label: "دوران سلامت اهدای مجدد",
