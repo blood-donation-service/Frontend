@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import {
   handleConfirmDonation,
   handleResolveNeed,
-  quickLoginAsStaff,
 } from "../../sharedcomponents/appSlice";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -12,54 +11,8 @@ export default function StaffDashboard() {
     (store) => store.app,
   );
 
-  {
-    /* ==========================================
-            VIEW: STAFF DASHBOARD
-            ========================================== */
-  }
   return (
     <div className="animate-fade-in mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      {/* Guest / Demo Mode Header Warning */}
-      {!currentUser && (
-        <div className="flex flex-col items-start justify-between gap-4 rounded-3xl border border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 p-6 shadow-sm md:flex-row md:items-center">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-blue-100 p-2.5 text-blue-700">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-blue-900">
-                حالت نمایشی مرکز فعال است (CTR-110 - امام خمینی)
-              </h4>
-              <p className="mt-1 max-w-2xl text-xs text-blue-700">
-                شما بدون وارد شدن به عنوان کادر درمان می‌توانید درخواست‌ها و
-                لیست رزروهای مرکز امام خمینی را مدیریت کنید. برای شبیه‌سازی
-                با دسترسی اختصاصی‌تر، روی دکمه شبیه‌سازی ورود سریع کادر درمان
-                کلیک کنید.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => dispatch(quickLoginAsStaff())}
-            className="shrink-0 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-indigo-600/10 transition-all hover:bg-indigo-700"
-          >
-            ⚡ ورود سریع کادر درمان نمونه
-          </button>
-        </div>
-      )}
-
-      {/* Dashboard Stat Overview */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div>
           <span className="text-xs font-extrabold text-rose-600 uppercase">
@@ -71,9 +24,9 @@ export default function StaffDashboard() {
               : "مرکز درمانی (مهمان)"}
           </h2>
           <p className="mt-1 text-xs text-slate-400">
-            شناسه مرکز: <b>{currentUser?.centerId || currentUser?.id || "CTR-110"}</b>{" "}
-            | کد ملی:{" "}
-            <b>{currentUser?.nationalCode || "—"}</b>
+            شناسه مرکز:{" "}
+            <b>{currentUser?.centerId || currentUser?.id || "CTR-110"}</b> | کد
+            ملی: <b>{currentUser?.nationalCode || "—"}</b>
           </p>
         </div>
 
@@ -98,14 +51,15 @@ export default function StaffDashboard() {
         </Link>
       </div>
 
-      {/* Active Requests by this Hospital */}
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-base font-black text-slate-900">
           درخواست‌های فعال ثبت شده توسط مرکز شما
         </h3>
 
         {needs.filter(
-          (n) => n.centerId === (currentUser?.centerId || currentUser?.id || "CTR-110"),
+          (n) =>
+            n.centerId ===
+            (currentUser?.centerId || currentUser?.id || "CTR-110"),
         ).length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <span className="text-4xl">🏥</span>
@@ -124,7 +78,8 @@ export default function StaffDashboard() {
             {needs
               .filter(
                 (n) =>
-                  n.centerId === (currentUser?.centerId || currentUser?.id || "CTR-110"),
+                  n.centerId ===
+                  (currentUser?.centerId || currentUser?.id || "CTR-110"),
               )
               .map((need) => {
                 const pendingReservations = reservations.filter(
@@ -174,7 +129,6 @@ export default function StaffDashboard() {
                       </div>
                     </div>
 
-                    {/* List of enrolled volunteers for this need */}
                     <div className="flex flex-col gap-3 border-t border-slate-50 pt-4">
                       <span className="text-[10px] font-black text-slate-400 uppercase">
                         لیست داوطلبان متصل شده به این نیاز:

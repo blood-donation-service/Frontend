@@ -1,19 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { handleLogout, setRegisterRole, updateLoginForm } from "./appSlice";
+import { handleLogout, setRegisterRole } from "./appSlice";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { currentUser, userRole, loginForm } = useSelector(
-    (store) => store.app,
-  );
-
+  const { currentUser, userRole } = useSelector((store) => store.app);
   const { pathname } = useLocation();
 
-  {
-    /* NAVBAR */
-  }
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 shadow-sm backdrop-blur-md">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -48,7 +42,6 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Always Available Nav Buttons - No Auth Required */}
           <div className="hidden items-center gap-2 md:flex">
             <NavLink
               to={"/"}
@@ -79,7 +72,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {userRole !== null ? (
+            {userRole ? (
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col text-left lg:flex">
                   <span className="text-right text-xs text-slate-400">
@@ -113,9 +106,6 @@ export default function Navbar() {
               <div className="flex items-center gap-2">
                 <Link
                   to={"/login"}
-                  onClick={() =>
-                    dispatch(updateLoginForm({ ...loginForm, role: "donor" }))
-                  }
                   className="px-4 py-2 text-xs font-bold text-slate-700 transition-colors hover:cursor-pointer hover:text-slate-900"
                 >
                   ورود کاربران

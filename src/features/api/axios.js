@@ -4,13 +4,6 @@ const TOKEN_STORAGE_KEY = "access_token";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL ?? "/api";
 
-// const api: AxiosInstance = axios.create({
-//   baseURL,
-//   timeout: 15000,
-//   headers: {
-//     "Content-Type": "application/json",
-//   },
-// });
 const api = axios.create({
   baseURL: baseURL,
   headers: {
@@ -30,26 +23,10 @@ const getAccessToken = () => {
   return getCookie(TOKEN_STORAGE_KEY);
 };
 
-// api.interceptors.request.use(
-//   (config) => {
-//     const token = getAccessToken();
-//     if (token) {
-//       config.headers = {
-//         ...config.headers,
-//         Authorization: `Bearer ${token}`,
-//       };
-//     }
-//     return config;
-//   },
-//   (error: AxiosError) => Promise.reject(error),
-// );
-
-// Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = getAccessToken(); // or from context/state // or from context/state
+    const token = getAccessToken();
     if (token && config.headers) {
-      // Ensure headers exist and add Authorization
       config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;

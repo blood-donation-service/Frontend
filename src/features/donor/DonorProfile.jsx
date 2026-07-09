@@ -7,18 +7,12 @@ export default function DonorProfile() {
     (store) => store.app,
   );
 
-  {
-    /* ==========================================
-            VIEW: DONOR PROFILE & HISTORY
-            ========================================== */
-  }
   return (
     <div className="animate-fade-in mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8">
       <h2 className="text-2xl font-black text-slate-900">
         حساب کاربری و سوابق اهدای شما
       </h2>
 
-      {/* Profile Detail Card */}
       <div className="grid grid-cols-1 gap-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm md:grid-cols-3">
         <div className="flex flex-col items-center gap-4 border-l border-slate-50 pl-6 text-center md:col-span-1">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-3xl font-black text-rose-600 shadow-inner">
@@ -73,7 +67,6 @@ export default function DonorProfile() {
         </div>
       </div>
 
-      {/* Donor's Reservations list */}
       <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <h3 className="mb-4 text-base font-black text-slate-900">
           رزروهای ثبت شده شما

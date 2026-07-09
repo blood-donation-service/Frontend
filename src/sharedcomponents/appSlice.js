@@ -1,9 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// ==========================================
-// MOCK DATABASE & SEED DATA
-// ==========================================
-
 const INITIAL_NEEDS = [
   {
     id: "need-1",
@@ -18,7 +14,7 @@ const INITIAL_NEEDS = [
     phone: "021-61190000",
     address: "تهران، انتهای بلوار کشاورز، مجتمع بیمارستانی امام خمینی",
     status: "active",
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(), // 12 hours ago
+    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
   },
   {
     id: "need-2",
@@ -33,7 +29,7 @@ const INITIAL_NEEDS = [
     phone: "021-84901000",
     address: "تهران، خیابان کارگر شمالی، تقاطع بزرگراه جلال آل احمد",
     status: "active",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(), // 24 hours ago
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
   },
   {
     id: "need-3",
@@ -48,7 +44,7 @@ const INITIAL_NEEDS = [
     phone: "021-66701041",
     address: "تهران، میدان امام خمینی، خیابان امام خمینی",
     status: "completed",
-    createdAt: new Date(Date.now() - 3600000 * 72).toISOString(), // 3 days ago (Expired / Completed)
+    createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
   },
   {
     id: "need-4",
@@ -63,7 +59,7 @@ const INITIAL_NEEDS = [
     phone: "021-61190000",
     address: "تهران، انتهای بلوار کشاورز، مجتمع بیمارستانی امام خمینی",
     status: "active",
-    createdAt: new Date().toISOString(), // Just now
+    createdAt: new Date().toISOString(),
   },
 ];
 
@@ -76,44 +72,29 @@ const INITIAL_RESERVATIONS = [
     donorPhone: "09123456789",
     donorBloodType: "O+",
     reservedQuantity: 1,
-    status: "registered", // registered, approved, cancelled
+    status: "registered",
     createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
   },
 ];
 
-// تابع کمکی برای استخراج آنتی‌ژن‌ها و Rh
 function parseBloodType(type) {
   const rh = type.includes("+") ? "+" : "-";
   const abo = type.replace(/[+-]/, "");
-  const antigens = new Set(
-    abo === "O" ? [] : abo.split(""), // 'A' -> ['A'], 'AB' -> ['A','B']
-  );
+  const antigens = new Set(abo === "O" ? [] : abo.split(""));
   return { abo, rh, antigens };
 }
 
 const initialState = {
-  // Navigation & Role states
   userRole: null,
   currentUser: null,
 
-  // Core Data States
   needs: INITIAL_NEEDS,
   reservations: INITIAL_RESERVATIONS,
 
-  // Simulation parameters
   isReserving: false,
 
-  // Custom Toasts system
   toasts: [],
 
-  // Forms states
-  loginForm: {
-    id: "",
-    password: "",
-    role: "donor",
-  },
-
-  // Register Role
   registerRole: "donor",
 };
 
@@ -172,9 +153,6 @@ const appSlice = createSlice({
         state.reservations = action.payload.updatedReservations;
       },
     },
-    updateLoginForm(state, action) {
-      state.loginForm = action.payload;
-    },
     updateReservations(state, action) {
       state.reservations = action.payload;
     },
@@ -192,7 +170,6 @@ export const {
   setUserRole,
   cancelReservation,
   doReservation,
-  updateLoginForm,
   updateReservations,
   setRegisterRole,
 } = appSlice.actions;
@@ -208,7 +185,6 @@ export function handleLogout(navigate) {
   };
 }
 
-// Staff confirms the donor actually donated
 export function handleConfirmDonation(resId) {
   return async function (dispatch, getState) {
     dispatch(
@@ -232,31 +208,6 @@ export function handleConfirmDonation(resId) {
   };
 }
 
-// Quick login helpers for Demo/Guest state
-export function quickLoginAsStaff() {
-  const mockStaff = {
-    id: "CTR-110",
-    firstName: "علیرضا",
-    lastName: "رضایی",
-    nationalCode: "0012345678",
-    phone: "61190000",
-    centerId: "CTR-110",
-  };
-
-  return async function (dispatch) {
-    dispatch(specifyUserInfo(mockStaff));
-    dispatch(setUserRole("staff"));
-    dispatch(
-      showToast(
-        "ورود سریع کادر درمان",
-        "شما به عنوان مسئول بخش اورژانس بیمارستان امام خمینی وارد شدید.",
-        "success",
-      ),
-    );
-  };
-}
-
-// Staff closes/resolves a full medical need request
 export function handleResolveNeed(needId) {
   return async function (dispatch, getState) {
     dispatch(
@@ -280,7 +231,6 @@ export function handleResolveNeed(needId) {
   };
 }
 
-// Staff creates new request
 export function handleCreateNeed(newNeedForm, navigate) {
   return async function (dispatch, getState) {
     if (newNeedForm.quantityRequired <= 0) {
@@ -327,7 +277,6 @@ export function handleCreateNeed(newNeedForm, navigate) {
   };
 }
 
-// Donor cancels their own reservation
 export function handleCancelReservation(resId) {
   return async function (dispatch) {
     dispatch(cancelReservation(resId));
@@ -341,7 +290,6 @@ export function handleCancelReservation(resId) {
   };
 }
 
-// Add a Toast Helper
 export function showToast(title, message, type = "success") {
   const id = Date.now();
 
@@ -355,7 +303,6 @@ export function showToast(title, message, type = "success") {
   };
 }
 
-// Handle Reservation with Simulated Database Transaction & Race Conditions
 export function handleReserve(needId) {
   return async function (dispatch, getState) {
     const need = getState().app.needs.find((n) => n.id === needId);

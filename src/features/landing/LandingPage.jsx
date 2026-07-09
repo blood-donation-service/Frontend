@@ -1,25 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import {
-  handleReserve,
-  showToast,
-  updateLoginForm,
-} from "../../sharedcomponents/appSlice";
+import { handleReserve, showToast } from "../../sharedcomponents/appSlice";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
-  const { needs, loginForm, userRole, isReserving } = useSelector(
-    (store) => store.app,
-  );
+  const { needs, userRole, isReserving } = useSelector((store) => store.app);
 
-  {
-    /* ==========================================
-            VIEW: LANDING PAGE
-            ========================================== */
-  }
   return (
     <div className="flex flex-col items-center gap-16 px-4 py-12 md:py-20">
-      {/* Urgent Notification Banner */}
       {(!userRole || userRole === "donor") && (
         <div className="animate-fade-in flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
           <div className="flex items-center gap-3">
@@ -44,7 +32,6 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* HERO SECTION */}
       <div className="flex max-w-5xl flex-col items-center gap-6 text-center">
         <h1 className="max-w-4xl text-4xl leading-tight font-black tracking-tight text-slate-900 md:text-6xl">
           اتصال مستقیم <span className="text-rose-600">اهداکنندگان خون</span> به
@@ -68,18 +55,16 @@ export default function LandingPage() {
           {(userRole === "staff" || !userRole) && (
             <Link
               to={`${!isReserving ? (!userRole ? "/login" : "/staff-dashboard") : ""}`}
-              onClick={() => {
-                if (!userRole) {
-                  dispatch(
-                    showToast(
-                      "توجه",
-                      "برای ورود به پنل کادر درمان ابتدا وارد حساب کاربری خود شوید",
-                      "info",
-                    ),
-                  );
-                  dispatch(updateLoginForm({ ...loginForm, role: "staff" }));
-                }
-              }}
+              onClick={() =>
+                !userRole &&
+                dispatch(
+                  showToast(
+                    "توجه",
+                    "برای ورود به پنل کادر درمان ابتدا وارد حساب کاربری خود شوید",
+                    "info",
+                  ),
+                )
+              }
               className={`${userRole === "staff" ? "bg-rose-600 text-white shadow-xl shadow-rose-600/20 hover:bg-rose-700" : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"} rounded-2xl px-8 py-4 text-sm font-extrabold transition-all active:scale-95 ${isReserving ? "cursor-wait" : ""}`}
             >
               ورود به پنل کادر درمان
@@ -88,9 +73,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ==========================================
-                LANDING VIEW INTEGRATION: LIVE REQUESTS LIST
-                ========================================== */}
       <div className="flex w-full max-w-5xl flex-col gap-6">
         <div className="flex items-center justify-between border-b border-slate-200 pb-4">
           <div>
@@ -103,13 +85,15 @@ export default function LandingPage() {
               اطلاعات دقیق مراجعه را ببینید.
             </p>
           </div>
-          <Link
-            to={isReserving ? "" : "/donor-dashboard"}
-            className={`flex items-center gap-1 text-xs font-extrabold text-rose-600 ${isReserving ? "cursor-wait" : "hover:text-rose-700"}`}
-          >
-            <span>نمایش همه در نقشه تعاملی</span>
-            <span>←</span>
-          </Link>
+          {(userRole === "donor" || !userRole) && (
+            <Link
+              to={isReserving ? "" : "/donor-dashboard"}
+              className={`flex items-center gap-1 text-xs font-extrabold text-rose-600 ${isReserving ? "cursor-wait" : "hover:text-rose-700"}`}
+            >
+              <span>نمایش همه در نقشه تعاملی</span>
+              <span>←</span>
+            </Link>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -135,7 +119,6 @@ export default function LandingPage() {
                   }`}
                 >
                   <div>
-                    {/* Header card info */}
                     <div className="mb-3 flex items-start justify-between gap-4">
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-lg font-black text-rose-600 shadow-inner">
                         {need.bloodTypeRequired}
@@ -152,7 +135,6 @@ export default function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Progress Bar */}
                     <div className="my-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${isCritical ? "bg-rose-500" : "bg-emerald-500"}`}
@@ -160,7 +142,6 @@ export default function LandingPage() {
                       ></div>
                     </div>
 
-                    {/* Detail text */}
                     <div className="my-3 flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-500">
                       <span>
                         📍 <b>آدرس:</b> {need.address}
@@ -171,7 +152,6 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  {/* Reserve action panel */}
                   <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
                     <span className="text-[10px] text-slate-400">
                       {need.quantityRemaining} واحد مورد نیاز باقی‌مانده
@@ -233,7 +213,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* PROCESS CARDS */}
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <h3 className="text-center text-2xl font-black text-slate-900">
           چگونه جان یک بیمار را نجات می‌دهید؟
@@ -272,7 +251,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* LIVE STATISTICS */}
       <div className="grid w-full max-w-5xl grid-cols-2 gap-6 md:grid-cols-4">
         {[
           {
