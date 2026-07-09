@@ -16,11 +16,6 @@ export default function NewRequest() {
     province: "تهران",
   });
 
-  {
-    /* ==========================================
-            VIEW: CREATE NEW NEED REQUEST
-            ========================================== */
-  }
   return (
     <div className="animate-fade-in mx-auto max-w-2xl px-4 py-8">
       <div className="flex flex-col gap-6 rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">

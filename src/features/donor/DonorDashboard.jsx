@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  handleReserve,
-  setUserRole,
-  showToast,
-  specifyUserInfo,
-} from "../../sharedcomponents/appSlice";
+import { handleReserve, showToast } from "../../sharedcomponents/appSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate } from "react-router-dom";
 import { IRAN_PROVINCES } from "../../sharedcomponents/iranProvinces";
@@ -38,12 +33,10 @@ export default function DonorDashboard() {
     (store) => store.app,
   );
 
-  // Filter States for Donor Dashboard & Main Page List
   const [filterBloodType, setFilterBloodType] = useState("All");
   const [filterProvince, setFilterProvince] = useState("All");
   const [searchHospital, setSearchHospital] = useState("");
 
-  // Filters calculation
   const filteredNeeds = needs.filter((need) => {
     const matchesBlood =
       filterBloodType === "All" || need.bloodTypeRequired === filterBloodType;
@@ -55,80 +48,9 @@ export default function DonorDashboard() {
     return matchesBlood && matchesProvince && matchesHospital;
   });
 
-  // Quick login helpers for Demo/Guest state
-  function quickLoginAsDonor() {
-    const mockDonor = {
-      id: "donor-demo",
-      name: "علیرضا رضایی (نمونه)",
-      nationalId: "0012345678",
-      bloodType: "O+",
-      province: "تهران",
-      mobile: "09121111111",
-      canDonate: true,
-      lockoutUntil: null,
-    };
-
-    dispatch(specifyUserInfo(mockDonor));
-    dispatch(setUserRole("staff"));
-    dispatch(
-      showToast(
-        "ورود سریع اهداکننده",
-        "شما به عنوان اهداکننده نمونه وارد سیستم شدید.",
-        "success",
-      ),
-    );
-  }
-
-  {
-    /* ==========================================
-            VIEW: DONOR DASHBOARD (CORE INTERACTION)
-            ========================================== */
-  }
-
   if (userRole === "staff") return <Navigate to="/" replace />;
   return (
     <div className="animate-fade-in mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      {/* Guest / Demo Mode Header Warning */}
-      {!currentUser && (
-        <div className="flex flex-col items-start justify-between gap-4 rounded-3xl border border-blue-200 bg-linear-to-r from-blue-50 to-indigo-50 p-6 shadow-sm md:flex-row md:items-center">
-          <div className="flex items-start gap-4">
-            <div className="rounded-2xl bg-blue-100 p-2.5 text-blue-700">
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-blue-900">
-                حالت مشاهده مهمان (بدون نیاز به ورود) فعال است
-              </h4>
-              <p className="mt-1 max-w-2xl text-xs text-blue-700">
-                شما بدون وارد شدن به حساب کاربری می‌توانید کل سیستم را کاوش،
-                فیلتر و حتی رزرو کنید. برای شبیه‌سازی دقیق‌تر با هویت یک
-                اهداکننده واقعی، می‌توانید از دکمه ورود سریع اهداکننده استفاده
-                کنید.
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={() => dispatch(quickLoginAsDonor())}
-            className="shrink-0 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-extrabold text-white shadow-md shadow-blue-600/10 transition-all hover:bg-blue-700"
-          >
-            ⚡ ورود سریع اهداکننده نمونه
-          </button>
-        </div>
-      )}
-
-      {/* Lockout & Recovery Warnings */}
       {currentUser?.lockoutUntil &&
         new Date(currentUser.lockoutUntil) > new Date() && (
           <div className="animate-fade-in flex flex-col items-start justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm md:flex-row md:items-center">
@@ -168,7 +90,6 @@ export default function DonorDashboard() {
           </div>
         )}
 
-      {/* Dash Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-lg font-black text-rose-600">
@@ -185,11 +106,8 @@ export default function DonorDashboard() {
           </div>
         </div>
       </div>
-      {/* CORE COLUMNS: MAP, FILTERS & CARDS */}
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-3">
-        {/* Filter Column */}
         <div className="flex flex-col gap-6 lg:col-span-1">
-          {/* Search & Selection */}
           <div className="flex flex-col gap-5 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
             <h4 className="border-b border-slate-50 pb-3 text-sm font-black text-slate-950">
               فیلترهای هوشمند جستجو
@@ -254,7 +172,6 @@ export default function DonorDashboard() {
             </div>
           </div>
 
-          {/* GRAPHICAL INTERACTIVE IRAN PROVINCES MAP */}
           <div className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-black text-slate-950">
@@ -269,7 +186,6 @@ export default function DonorDashboard() {
               شماتیک کلیک کنید:
             </p>
 
-            {/* Simulated SVG Map of Iran Provinces */}
             <div className="group relative flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <svg
                 viewBox={`0 0 ${MAP_W} ${MAP_H}`}
@@ -342,9 +258,7 @@ export default function DonorDashboard() {
           </div>
         </div>
 
-        {/* Need Cards List Column */}
         <div className="flex flex-col gap-6 lg:col-span-2">
-          {/* Search result count */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">
               یافت شده: <b>{filteredNeeds.length} مورد فعال</b>
@@ -388,7 +302,6 @@ export default function DonorDashboard() {
                             : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
-                    {/* Top row */}
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
                       <div className="flex items-center gap-3">
                         <span
@@ -425,7 +338,6 @@ export default function DonorDashboard() {
                         </div>
                       </div>
 
-                      {/* Status badges */}
                       <div className="flex items-center gap-1.5">
                         {isClosed && (
                           <span className="rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
@@ -450,7 +362,6 @@ export default function DonorDashboard() {
                       </div>
                     </div>
 
-                    {/* Detail body */}
                     <div className="mb-4 flex flex-col justify-between gap-4 rounded-2xl bg-slate-50 p-4 md:flex-row md:items-center">
                       <div className="flex flex-col gap-1 text-xs">
                         <span className="text-slate-400">
@@ -468,7 +379,6 @@ export default function DonorDashboard() {
                       </div>
                     </div>
 
-                    {/* Progress bar */}
                     <div className="mb-5 flex flex-col gap-1.5 border-b border-slate-50 pb-4">
                       <div className="flex items-center justify-between text-[10px] font-bold">
                         <span className="text-slate-400">
@@ -494,7 +404,6 @@ export default function DonorDashboard() {
                       </div>
                     </div>
 
-                    {/* Action panel */}
                     <Link
                       to={`${!userRole ? "/login" : ""}`}
                       onClick={() => {

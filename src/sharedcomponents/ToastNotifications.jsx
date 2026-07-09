@@ -1,10 +1,6 @@
 import { useSelector } from "react-redux";
 
 export default function ToastNotifications() {
-  {
-    /* GLOBAL TOAST NOTIFICATIONS */
-  }
-
   const { toasts } = useSelector((store) => store.app);
 
   return (

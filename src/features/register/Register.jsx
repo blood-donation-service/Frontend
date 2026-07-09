@@ -1,26 +1,16 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import {
-  setRegisterRole,
-  showToast,
-  specifyUserInfo,
-  updateLoginForm,
-} from "../../sharedcomponents/appSlice";
+import { setRegisterRole, showToast } from "../../sharedcomponents/appSlice";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import api from "../api/axios";
 import { IRAN_PROVINCES } from "../../sharedcomponents/iranProvinces";
 
-// const setAuthCookie = (token) => {
-//   document.cookie = `access_token=${token}; path=/;  SameSite=Lax`;
-// };
-
 function Register() {
+  const { register, handleSubmit, setValue } = useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { registerRole, loginForm, userRole } = useSelector(
-    (store) => store.app,
-  );
+  const { registerRole, userRole } = useSelector((store) => store.app);
 
   const [donorRegForm, setDonorRegForm] = useState({
     firstName: "",
@@ -55,14 +45,7 @@ function Register() {
   });
   const [isRegistering, setIsRegistering] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    // formState: { errors },
-  } = useForm();
-
-  const onSubmit = async (data) => {
+  const onSubmit = async () => {
     if (isRegistering) return;
     try {
       if (registerRole === "donor") {
@@ -77,59 +60,61 @@ function Register() {
 
       setIsRegistering(true);
 
+      const payload =
+        registerRole === "donor"
+          ? {
+              first_name: donorRegForm.firstName.trim(),
+              last_name: donorRegForm.lastName.trim(),
+              national_code: donorRegForm.nationalId,
+              mobile_number: donorRegForm.mobile,
+              blood_group: donorRegForm.bloodType,
+              province: donorRegForm.province,
+              password: donorRegForm.password,
+            }
+          : {
+              first_name: staffRegForm.firstName.trim(),
+              last_name: staffRegForm.lastName.trim(),
+              national_code: staffRegForm.nationalCode,
+              mobile_number: staffRegForm.phone,
+              center_id: staffRegForm.centerId.trim(),
+              password: staffRegForm.password,
+            };
+
       const response =
         registerRole === "donor"
-          ? await api.post("/auth/register/donor/", data)
-          : await api.post("/auth/register/staff/", data);
+          ? await api.post("/api/auth/register/donor/", payload)
+          : await api.post("/api/auth/register/staff/", payload);
 
-      // if (response.data.token) {
-      //   setAuthCookie(response.data.token);
-      // }
-
-      if (registerRole === "donor") {
-        const newDonor = {
-          id: String(response.data.user.id),
-          name:
-            response.data.profile.first_name +
-            " " +
-            response.data.profile.last_name,
-          nationalId: response.data.user.username,
-          bloodType: response.data.profile.blood_group,
-          province: response.data.profile.province,
-          mobile: response.data.profile.mobile_number,
-          canDonate: true,
-          lockoutUntil: null,
-        };
-        dispatch(specifyUserInfo(newDonor));
-        navigate("/login");
+      if (registerRole === "donor")
         dispatch(
           showToast(
             "عضویت موفقیت‌آمیز",
-            `${newDonor.name} عزیز، خوش آمدید. اکنون وارد شوید.`,
+            `${`${response.data?.profile?.first_name ?? ""} ${response.data?.profile?.last_name ?? ""}`} عزیز، خوش آمدید. اکنون وارد شوید.`,
             "success",
           ),
         );
-      } else {
-        const newStaff = {
-          id: String(response.data.id),
-          firstName: response.data.first_name,
-          lastName: response.data.last_name,
-          nationalCode: response.data.national_code,
-          phone: response.data.phone_number,
-          centerId: response.data.medical_center.center_id,
-        };
-        dispatch(specifyUserInfo(newStaff));
-        navigate("/login");
+      else {
         dispatch(
           showToast(
-            "ثبت مرکز درمانی موفقیت‌آمیز بود",
-            `${response.data.medical_center.name} با موفقیت ثبت شد. اکنون وارد شوید.`,
+            "ثبت نام موفقیت‌آمیز بود",
+            `در صورت تایید توسط همکاران ما میتوانید وارد شوید`,
             "success",
           ),
         );
       }
+
+      navigate("/login");
     } catch (error) {
-      console.error(error);
+      console.error("Registration error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.detail ||
+        (typeof error.response?.data === "string"
+          ? error.response.data
+          : null) ||
+        error.message ||
+        "خطا در ثبت نام. لطفاً دوباره تلاش کنید.";
+      dispatch(showToast("خطا در ثبت نام", errorMessage, "error"));
     } finally {
       setIsRegistering(false);
     }
@@ -260,7 +245,7 @@ function Register() {
     return true;
   }
 
-  if (userRole !== null) return <Navigate to="/" replace />;
+  if (userRole) return <Navigate to="/" replace />;
   return (
     <div className="flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">
@@ -276,7 +261,7 @@ function Register() {
         ) : (
           <div className="mb-6 flex flex-col gap-2 text-center">
             <h3 className="text-2xl font-black text-slate-900">
-              ثبت مرکز درمانی و بیمارستان
+              ثبت نام کادر درمان
             </h3>
             <p className="text-xs text-slate-400">
               اطلاعات حقوقی بیمارستان خود را جهت اخذ دسترسی مدیریت بحران تکمیل
@@ -302,7 +287,7 @@ function Register() {
             }
             className={`rounded-xl py-2.5 text-xs font-bold transition-all ${registerRole === "staff" ? "bg-white text-rose-600 shadow" : isRegistering ? "cursor-wait text-slate-400" : "cursor-pointer text-slate-400 hover:text-slate-700"}`}
           >
-            کادر درمان / بیمارستان
+            کادر درمانی
           </button>
         </div>
 
@@ -310,125 +295,195 @@ function Register() {
           onSubmit={handleSubmit(onSubmit)}
           className="grid grid-cols-1 gap-4 md:grid-cols-2"
         >
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              نام
+            </label>
+            <input
+              type="text"
+              placeholder="مثال: علی"
+              value={
+                registerRole === "donor"
+                  ? donorRegForm.firstName
+                  : staffRegForm.firstName
+              }
+              {...register(
+                registerRole === "donor"
+                  ? "donor_firstName"
+                  : "staff_firstName",
+                { required: "نام الزامی است" },
+              )}
+              onChange={(e) => {
+                if (registerRole === "donor") {
+                  setDonorRegForm((prev) => ({
+                    ...prev,
+                    firstName: e.target.value,
+                  }));
+                  setValue("donor_firstName", e.target.value, {
+                    shouldValidate: true,
+                  });
+                } else {
+                  setStaffRegForm((prev) => ({
+                    ...prev,
+                    firstName: e.target.value,
+                  }));
+                  setValue("staff_firstName", e.target.value, {
+                    shouldValidate: true,
+                  });
+                }
+              }}
+              className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
+              disabled={isRegistering}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              نام خانوادگی
+            </label>
+            <input
+              type="text"
+              placeholder="مثال: اکبری"
+              value={
+                registerRole === "donor"
+                  ? donorRegForm.lastName
+                  : staffRegForm.lastName
+              }
+              {...register(
+                registerRole === "donor" ? "donor_lastName" : "staff_lastName",
+                {
+                  required: "نام خانوادگی الزامی است",
+                },
+              )}
+              onChange={(e) => {
+                if (registerRole === "donor") {
+                  setDonorRegForm((prev) => ({
+                    ...prev,
+                    lastName: e.target.value,
+                  }));
+                  setValue("donor_lastName", e.target.value, {
+                    shouldValidate: true,
+                  });
+                } else {
+                  setStaffRegForm((prev) => ({
+                    ...prev,
+                    lastName: e.target.value,
+                  }));
+                  setValue("staff_lastName", e.target.value, {
+                    shouldValidate: true,
+                  });
+                }
+              }}
+              className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
+              disabled={isRegistering}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              کد ملی
+            </label>
+            <input
+              type="text"
+              placeholder="۱۰ رقم"
+              maxLength={10}
+              value={
+                registerRole === "donor"
+                  ? donorRegForm.nationalId
+                  : staffRegForm.nationalCode
+              }
+              {...register(
+                registerRole === "donor"
+                  ? "donor_nationalId"
+                  : "staff_nationalCode",
+                {
+                  required: "کد ملی الزامی است",
+                },
+              )}
+              onChange={(e) => {
+                if (e.target.value >= 0) {
+                  if (registerRole === "donor") {
+                    setDonorRegForm((prev) => ({
+                      ...prev,
+                      nationalId: e.target.value.trim(),
+                    }));
+                    setValue("donor_nationalId", e.target.value.trim(), {
+                      shouldValidate: true,
+                    });
+                  } else {
+                    setStaffRegForm((prev) => ({
+                      ...prev,
+                      nationalCode: e.target.value.trim(),
+                    }));
+                    setValue("staff_nationalCode", e.target.value.trim(), {
+                      shouldValidate: true,
+                    });
+                  }
+                }
+              }}
+              className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
+              disabled={isRegistering}
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              شماره موبایل
+            </label>
+            <input
+              type="text"
+              placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+              maxLength={11}
+              value={
+                registerRole === "donor"
+                  ? donorRegForm.mobile
+                  : staffRegForm.phone
+              }
+              {...register(
+                registerRole === "donor" ? "donor_mobile" : "staff_phone",
+                {
+                  required: "شماره تلفن الزامی است",
+                },
+              )}
+              onChange={(e) => {
+                if (e.target.value >= 0) {
+                  if (registerRole === "donor") {
+                    setDonorRegForm((prev) => ({
+                      ...prev,
+                      mobile: e.target.value.trim(),
+                    }));
+                    setValue("donor_mobile", e.target.value.trim(), {
+                      shouldValidate: true,
+                    });
+                  } else {
+                    setStaffRegForm((prev) => ({
+                      ...prev,
+                      phone: e.target.value.trim(),
+                    }));
+                    setValue("staff_phone", e.target.value.trim(), {
+                      shouldValidate: true,
+                    });
+                  }
+                }
+              }}
+              className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
+              disabled={isRegistering}
+              required
+            />
+          </div>
+
           {registerRole === "donor" ? (
             <>
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  نام
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: علی"
-                  value={donorRegForm.firstName}
-                  {...register("first_name", {
-                    required: "نام الزامی است",
-                  })}
-                  onChange={(e) => {
-                    setDonorRegForm((prev) => ({
-                      ...prev,
-                      firstName: e.target.value,
-                    }));
-                    setValue("first_name", e.target.value, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  نام خانوادگی
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: اکبری"
-                  value={donorRegForm.lastName}
-                  {...register("last_name", {
-                    required: "نام خانوادگی الزامی است",
-                  })}
-                  onChange={(e) => {
-                    setDonorRegForm((prev) => ({
-                      ...prev,
-                      lastName: e.target.value,
-                    }));
-                    setValue("last_name", e.target.value, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  کد ملی
-                </label>
-                <input
-                  type="text"
-                  placeholder="۱۰ رقم"
-                  maxLength={10}
-                  value={donorRegForm.nationalId}
-                  {...register("national_code", {
-                    required: "کد ملی الزامی است",
-                  })}
-                  onChange={(e) => {
-                    if (e.target.value >= 0) {
-                      setDonorRegForm((prev) => ({
-                        ...prev,
-                        nationalId: e.target.value,
-                      }));
-                      setValue("national_code", e.target.value, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  شماره موبایل
-                </label>
-                <input
-                  type="text"
-                  placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                  maxLength={11}
-                  value={donorRegForm.mobile}
-                  {...register("mobile_number", {
-                    required: "شماره تلفن الزامی است",
-                  })}
-                  onChange={(e) => {
-                    if (e.target.value >= 0) {
-                      setDonorRegForm((prev) => ({
-                        ...prev,
-                        mobile: e.target.value,
-                      }));
-                      setValue("mobile_number", e.target.value, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
               <div>
                 <label className="mb-1.5 block text-xs font-bold text-slate-600">
                   گروه خونی
                 </label>
                 <select
                   value={donorRegForm.bloodType}
-                  {...register("blood_group", {
+                  {...register("donor_bloodType", {
                     required: "گروه خونی الزامی است",
                   })}
                   onChange={(e) => {
@@ -436,7 +491,7 @@ function Register() {
                       ...prev,
                       bloodType: e.target.value,
                     }));
-                    setValue("blood_group", e.target.value, {
+                    setValue("donor_bloodType", e.target.value, {
                       shouldValidate: true,
                     });
                   }}
@@ -464,7 +519,7 @@ function Register() {
                 </label>
                 <select
                   value={donorRegForm.province}
-                  {...register("province", {
+                  {...register("donor_province", {
                     required: "استان محل سکونت الزامی است",
                   })}
                   onChange={(e) => {
@@ -472,7 +527,7 @@ function Register() {
                       ...prev,
                       province: e.target.value,
                     }));
-                    setValue("province", e.target.value, {
+                    setValue("donor_province", e.target.value, {
                       shouldValidate: true,
                     });
                   }}
@@ -496,149 +551,37 @@ function Register() {
               </div>
             </>
           ) : (
-            <>
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  نام
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: علی"
-                  value={staffRegForm.firstName}
-                  {...register("first_name", {
-                    required: "نام الزامی است",
-                  })}
-                  onChange={(e) => {
-                    setStaffRegForm((prev) => ({
-                      ...prev,
-                      firstName: e.target.value,
-                    }));
-                    setValue("first_name", e.target.value, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  نام خانوادگی
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: اکبری"
-                  value={staffRegForm.lastName}
-                  {...register("last_name", {
-                    required: "نام خانوادگی الزامی است",
-                  })}
-                  onChange={(e) => {
-                    setStaffRegForm((prev) => ({
-                      ...prev,
-                      lastName: e.target.value,
-                    }));
-                    setValue("last_name", e.target.value, {
-                      shouldValidate: true,
-                    });
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  کد ملی
-                </label>
-                <input
-                  type="text"
-                  placeholder="۱۰ رقم"
-                  maxLength={10}
-                  value={staffRegForm.nationalCode}
-                  {...register("national_code", {
-                    required: "کد ملی الزامی است",
-                  })}
-                  onChange={(e) => {
-                    if (e.target.value >= 0) {
-                      setStaffRegForm((prev) => ({
-                        ...prev,
-                        nationalCode: e.target.value,
-                      }));
-                      setValue("national_code", e.target.value, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  شماره تلفن
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: 61190000"
-                  maxLength={11}
-                  value={staffRegForm.phone}
-                  {...register("mobile_number", {
-                    required: "شماره تلفن الزامی است",
-                  })}
-                  onChange={(e) => {
-                    if (e.target.value >= 0) {
-                      setStaffRegForm((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }));
-                      setValue("mobile_number", e.target.value, {
-                        shouldValidate: true,
-                      });
-                    }
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                  شناسه مرکز درمانی
-                </label>
-                <input
-                  type="text"
-                  placeholder="مثال: CTR-110"
-                  value={staffRegForm.centerId}
-                  {...register("center_id", {
-                    required: "شناسه مرکز درمانی الزامی است",
-                    pattern: {
-                      value: /^CTR-\d{3}$/,
-                      message: "فرمت صحیح: CTR-XXX (مثال: CTR-110)",
-                    },
-                  })}
-                  onChange={(e) => {
-                    const value = e.target.value.toUpperCase();
-                    setStaffRegForm((prev) => ({
-                      ...prev,
-                      centerId: value,
-                    }));
-                    setValue("center_id", value, { shouldValidate: true });
-                  }}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left font-mono text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
-                  disabled={isRegistering}
-                  required
-                />
-                <p className="mt-1 text-[10px] text-slate-400">
-                  فرمت: CTR- به‌علاوه‌ی سه رقم (مثال: CTR-110)
-                </p>
-              </div>
-            </>
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block text-xs font-bold text-slate-600">
+                شناسه مرکز درمانی
+              </label>
+              <input
+                type="text"
+                placeholder="مثال: CTR-110"
+                value={staffRegForm.centerId}
+                {...register("staff_centerId", {
+                  required: "شناسه مرکز درمانی الزامی است",
+                  pattern: {
+                    value: /^CTR-\d{3}$/,
+                    message: "فرمت صحیح: CTR-XXX (مثال: CTR-110)",
+                  },
+                })}
+                onChange={(e) => {
+                  const value = e.target.value.toUpperCase();
+                  setStaffRegForm((prev) => ({
+                    ...prev,
+                    centerId: value,
+                  }));
+                  setValue("staff_centerId", value, { shouldValidate: true });
+                }}
+                className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left font-mono text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
+                disabled={isRegistering}
+                required
+              />
+              <p className="mt-1 text-[10px] text-slate-400">
+                فرمت: CTR- به‌علاوه‌ی سه رقم (مثال: CTR-110)
+              </p>
+            </div>
           )}
 
           <div>
@@ -653,9 +596,10 @@ function Register() {
                   ? donorRegForm.password
                   : staffRegForm.password
               }
-              {...register("password", {
-                required: "کلمه عبور الزامی است",
-              })}
+              {...register(
+                registerRole === "donor" ? "donor_password" : "staff_password",
+                { required: "کلمه عبور الزامی است" },
+              )}
               onChange={(e) => {
                 const passParams = {
                   length: e.target.value.length >= 8,
@@ -672,16 +616,19 @@ function Register() {
                     password: e.target.value,
                   }));
                   setDonorPassStrength(passParams);
+                  setValue("donor_password", e.target.value, {
+                    shouldValidate: true,
+                  });
                 } else {
                   setStaffRegForm((prev) => ({
                     ...prev,
                     password: e.target.value,
                   }));
                   setStaffPassStrength(passParams);
+                  setValue("staff_password", e.target.value, {
+                    shouldValidate: true,
+                  });
                 }
-                setValue("password", e.target.value, {
-                  shouldValidate: true,
-                });
               }}
               className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm focus:border-rose-500 focus:outline-none ${isRegistering ? "cursor-wait" : ""}`}
               disabled={isRegistering}
@@ -718,7 +665,6 @@ function Register() {
             />
           </div>
 
-          {/* Password Strength Validation */}
           <div className="mt-2 flex flex-col gap-2 rounded-2xl bg-slate-50 p-4 md:col-span-2">
             <span className="text-xs font-bold text-slate-600">
               شرایط امنیتی رمز عبور:
@@ -789,12 +735,6 @@ function Register() {
           </span>
           <Link
             to={isRegistering ? "" : "/login"}
-            onClick={() =>
-              !isRegistering &&
-              (registerRole === "donor"
-                ? dispatch(updateLoginForm({ ...loginForm, role: "donor" }))
-                : dispatch(updateLoginForm({ ...loginForm, role: "staff" })))
-            }
             className={`text-xs font-bold text-rose-600 ${isRegistering ? "cursor-wait" : "cursor-pointer hover:underline"}`}
           >
             وارد شوید

@@ -6,6 +6,7 @@ import Footer from "./sharedcomponents/Footer";
 import NotFoundPage from "./sharedcomponents/NotFoundPage";
 import PageLoader from "./sharedcomponents/PageLoader";
 import RouteProgress from "./sharedcomponents/RouteProgress";
+import RestrictedArea from "./sharedcomponents/RestrictedArea";
 
 const LandingPage = lazy(() =>
   import("./features/landing/LandingPage").then((m) => ({
@@ -47,7 +48,6 @@ export default function App() {
     >
       <ToastNotifications />
 
-      {/* DYNAMIC VIEW ROUTER */}
       <BrowserRouter>
         <RouteProgress />
         <Navbar />
@@ -57,7 +57,9 @@ export default function App() {
               index
               element={
                 <Suspense fallback={<RouteFallback variant="landing" />}>
-                  <LandingPage />
+                  <RestrictedArea variant="landing">
+                    <LandingPage />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -65,7 +67,9 @@ export default function App() {
               path="login"
               element={
                 <Suspense fallback={<RouteFallback variant="login" />}>
-                  <Login />
+                  <RestrictedArea variant="login">
+                    <Login />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -73,7 +77,9 @@ export default function App() {
               path="register"
               element={
                 <Suspense fallback={<RouteFallback variant="register" />}>
-                  <Register />
+                  <RestrictedArea variant="register">
+                    <Register />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -83,7 +89,9 @@ export default function App() {
                 <Suspense
                   fallback={<RouteFallback variant="donor-dashboard" />}
                 >
-                  <DonorDashboard />
+                  <RestrictedArea variant="donor-dashboard">
+                    <DonorDashboard />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -93,7 +101,9 @@ export default function App() {
                 <Suspense
                   fallback={<RouteFallback variant="staff-dashboard" />}
                 >
-                  <StaffDashboard />
+                  <RestrictedArea variant="staff-dashboard">
+                    <StaffDashboard />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -101,7 +111,9 @@ export default function App() {
               path="donor-profile"
               element={
                 <Suspense fallback={<RouteFallback variant="donor-profile" />}>
-                  <DonorProfile />
+                  <RestrictedArea variant="donor-profile">
+                    <DonorProfile />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -109,7 +121,9 @@ export default function App() {
               path="request/new"
               element={
                 <Suspense fallback={<RouteFallback variant="new-request" />}>
-                  <NewRequest />
+                  <RestrictedArea variant="new-request">
+                    <NewRequest />
+                  </RestrictedArea>
                 </Suspense>
               }
             />
@@ -117,7 +131,9 @@ export default function App() {
               path="*"
               element={
                 <Suspense fallback={<RouteFallback variant="notfound" />}>
-                  <NotFoundPage />
+                  <RestrictedArea variant="notfound">
+                    <NotFoundPage />
+                  </RestrictedArea>
                 </Suspense>
               }
             />

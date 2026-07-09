@@ -1,7 +1,4 @@
 export default function Footer() {
-  {
-    /* FOOTER */
-  }
   return (
     <footer className="border-t border-slate-800 bg-slate-900 py-12 text-slate-400">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 text-center sm:px-6 md:grid-cols-3 md:text-right lg:px-8">
