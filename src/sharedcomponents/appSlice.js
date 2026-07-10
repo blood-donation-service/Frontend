@@ -1,67 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-
-const INITIAL_NEEDS = [
-  {
-    id: "need-1",
-    title: "نیاز مبرم به خون O+ جهت عمل جراحی قلب اورژانسی",
-    centerId: "CTR-110",
-    hospitalName: "بیمارستان امام خمینی",
-    needType: "خون کامل",
-    bloodTypeRequired: "O+",
-    quantityRequired: 5,
-    quantityRemaining: 1,
-    province: "تهران",
-    phone: "021-61190000",
-    address: "تهران، انتهای بلوار کشاورز، مجتمع بیمارستانی امام خمینی",
-    status: "active",
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-  },
-  {
-    id: "need-2",
-    title: "درخواست فوری پلاکت A- برای بیمار بخش آنکولوژی",
-    centerId: "CTR-120",
-    hospitalName: "بیمارستان شریعتی",
-    needType: "پلاکت",
-    bloodTypeRequired: "A-",
-    quantityRequired: 3,
-    quantityRemaining: 3,
-    province: "البرز",
-    phone: "021-84901000",
-    address: "تهران، خیابان کارگر شمالی، تقاطع بزرگراه جلال آل احمد",
-    status: "active",
-    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-  {
-    id: "need-3",
-    title: "کمبود شدید کیسه پلاسمای B+ جهت بیماران سوانح و سوختگی",
-    centerId: "CTR-130",
-    hospitalName: "بیمارستان سینا",
-    needType: "پلاسما",
-    bloodTypeRequired: "B+",
-    quantityRequired: 10,
-    quantityRemaining: 0,
-    province: "اصفهان",
-    phone: "021-66701041",
-    address: "تهران، میدان امام خمینی، خیابان امام خمینی",
-    status: "completed",
-    createdAt: new Date(Date.now() - 3600000 * 72).toISOString(),
-  },
-  {
-    id: "need-4",
-    title: "نیاز فوری به خون AB- برای مادر باردار در اتاق عمل",
-    centerId: "CTR-110",
-    hospitalName: "بیمارستان امام خمینی",
-    needType: "خون کامل",
-    bloodTypeRequired: "AB-",
-    quantityRequired: 2,
-    quantityRemaining: 2,
-    province: "تهران",
-    phone: "021-61190000",
-    address: "تهران، انتهای بلوار کشاورز، مجتمع بیمارستانی امام خمینی",
-    status: "active",
-    createdAt: new Date().toISOString(),
-  },
-];
+import { useUserInfo } from "./useUserInfo";
+import { useRequests } from "./useRequests";
 
 const INITIAL_RESERVATIONS = [
   {
@@ -85,10 +24,6 @@ function parseBloodType(type) {
 }
 
 const initialState = {
-  userRole: null,
-  currentUser: null,
-
-  needs: INITIAL_NEEDS,
   reservations: INITIAL_RESERVATIONS,
 
   isReserving: false,
@@ -108,30 +43,22 @@ const appSlice = createSlice({
     setIsReserving(state, action) {
       state.isReserving = action.payload;
     },
-    updateNeeds(state, action) {
-      state.needs = action.payload;
-    },
-    specifyUserInfo(state, action) {
-      state.currentUser = action.payload;
-    },
-    setUserRole(state, action) {
-      state.userRole = action.payload;
-    },
     cancelReservation(state, action) {
       const res = state.reservations.find((r) => r.id === action.payload);
       if (!res) return;
-      state.needs = state.needs.map((need) => {
-        if (need.id === res.medicalNeedId) {
-          return {
-            ...need,
-            quantityRemaining: Math.min(
-              need.quantityRequired,
-              need.quantityRemaining + 1,
-            ),
-          };
-        }
-        return need;
-      });
+      // refetch needs from back
+      // state.needs = state.needs.map((need) => {
+      //   if (need.id === res.medicalNeedId) {
+      //     return {
+      //       ...need,
+      //       quantityRemaining: Math.min(
+      //         need.quantityRequired,
+      //         need.quantityRemaining + 1,
+      //       ),
+      //     };
+      //   }
+      //   return need;
+      // });
       state.reservations = state.reservations.map((r) => {
         if (r.id === action.payload) {
           return { ...r, status: "cancelled" };
@@ -149,7 +76,8 @@ const appSlice = createSlice({
         };
       },
       reducer(state, action) {
-        state.needs = action.payload.updatedNeeds;
+        // refetch needs from back
+        // state.needs = action.payload.updatedNeeds;
         state.reservations = action.payload.updatedReservations;
       },
     },
@@ -165,9 +93,7 @@ const appSlice = createSlice({
 export const {
   updateToasts,
   setIsReserving,
-  updateNeeds,
   specifyUserInfo,
-  setUserRole,
   cancelReservation,
   doReservation,
   updateReservations,
@@ -177,7 +103,6 @@ export const {
 export function handleLogout(navigate) {
   return async function (dispatch) {
     dispatch(specifyUserInfo(null));
-    dispatch(setUserRole(null));
     navigate("/");
     dispatch(
       showToast("خروج از سیستم", "نشست شما با موفقیت خاتمه یافت.", "info"),
@@ -208,18 +133,19 @@ export function handleConfirmDonation(resId) {
   };
 }
 
-export function handleResolveNeed(needId) {
-  return async function (dispatch, getState) {
-    dispatch(
-      updateNeeds(
-        getState().app.needs.map((need) => {
-          if (need.id === needId) {
-            return { ...need, status: "completed" };
-          }
-          return need;
-        }),
-      ),
-    );
+export function handleResolveNeed() {
+  return async function (dispatch) {
+    // refetch needs from back
+    // dispatch(
+    //   updateNeeds(
+    //     getState().app.needs.map((need) => {
+    //       if (need.id === needId) {
+    //         return { ...need, status: "completed" };
+    //       }
+    //       return need;
+    //     }),
+    //   ),
+    // );
 
     dispatch(
       showToast(
@@ -232,7 +158,7 @@ export function handleResolveNeed(needId) {
 }
 
 export function handleCreateNeed(newNeedForm, navigate) {
-  return async function (dispatch, getState) {
+  return async function (dispatch) {
     if (newNeedForm.quantityRequired <= 0) {
       dispatch(
         showToast(
@@ -243,29 +169,27 @@ export function handleCreateNeed(newNeedForm, navigate) {
       );
       return;
     }
-
-    const centerId = getState().app.currentUser?.id || "CTR-110";
-    const phone = getState().app.currentUser?.phone || "021-61190000";
-    const address = "تهران، انتهای بلوار کشاورز";
-    const hospitalName = "بیمارستان امام خمینی (مهمان)";
-
-    const newNeed = {
-      id: "need-" + Date.now(),
-      title: newNeedForm.title,
-      centerId: centerId,
-      hospitalName: hospitalName,
-      needType: newNeedForm.needType,
-      bloodTypeRequired: newNeedForm.bloodTypeRequired,
-      quantityRequired: Number(newNeedForm.quantityRequired),
-      quantityRemaining: Number(newNeedForm.quantityRequired),
-      province: newNeedForm.province,
-      phone: phone,
-      address: address,
-      status: "active",
-      createdAt: new Date().toISOString(),
-    };
-
-    dispatch(updateNeeds([newNeed, ...getState().app.needs]));
+    // refetch needs from back
+    // const centerId = userInfo?.user?.id || "CTR-110";
+    // const phone = userInfo?.profile?.mobile_number || "021-61190000";
+    // const address = "تهران، انتهای بلوار کشاورز";
+    // const hospitalName = "بیمارستان امام خمینی (مهمان)";
+    // const newNeed = {
+    //   id: "need-" + Date.now(),
+    //   title: newNeedForm.title,
+    //   centerId: centerId,
+    //   hospitalName: hospitalName,
+    //   needType: newNeedForm.needType,
+    //   bloodTypeRequired: newNeedForm.bloodTypeRequired,
+    //   quantityRequired: Number(newNeedForm.quantityRequired),
+    //   quantityRemaining: Number(newNeedForm.quantityRequired),
+    //   province: newNeedForm.province,
+    //   phone: phone,
+    //   address: address,
+    //   status: "active",
+    //   createdAt: new Date().toISOString(),
+    // };
+    // dispatch(updateNeeds([newNeed, ...getState().app.needs]));
     navigate("/staff-dashboard");
     dispatch(
       showToast(
@@ -305,15 +229,14 @@ export function showToast(title, message, type = "success") {
 
 export function handleReserve(needId) {
   return async function (dispatch, getState) {
-    const need = getState().app.needs.find((n) => n.id === needId);
+    const { needs } = useRequests();
+    const { data: userInfo } = useUserInfo();
+    const need = needs.find((n) => n.id === needId);
     if (!need) return;
 
-    if (
-      getState().app.currentUser?.lockoutUntil &&
-      new Date(getState().app.currentUser.lockoutUntil) > new Date()
-    ) {
+    if (userInfo.lockoutUntil && new Date(userInfo.lockoutUntil) > new Date()) {
       const now = new Date();
-      const lockoutUntil = new Date(getState().app.currentUser.lockoutUntil);
+      const lockoutUntil = new Date(userInfo.lockoutUntil);
       const diffMs = lockoutUntil - now;
       const daysLeft =
         diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : 0;
@@ -339,7 +262,7 @@ export function handleReserve(needId) {
       return;
     }
 
-    const donor = parseBloodType(getState().app.currentUser.bloodType);
+    const donor = parseBloodType(userInfo?.profile?.blood_group);
     const recipient = parseBloodType(need.bloodTypeRequired);
 
     if (need.needType === "خون کامل") {
@@ -351,7 +274,7 @@ export function handleReserve(needId) {
         dispatch(
           showToast(
             "عدم تطابق گروه خونی",
-            `شما با گروه خونی ${getState().app.currentUser.bloodType} نمیتوانید به فردی با گروه خونی ${need.bloodTypeRequired} خون اهدا کنید`,
+            `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${need.bloodTypeRequired} خون اهدا کنید`,
             "error",
           ),
         );
@@ -368,7 +291,7 @@ export function handleReserve(needId) {
         dispatch(
           showToast(
             "عدم تطابق گروه خونی",
-            `شما با گروه خونی ${getState().app.currentUser.bloodType} نمیتوانید به فردی با گروه خونی ${need.bloodTypeRequired} ${need.needType} اهدا کنید`,
+            `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${need.bloodTypeRequired} ${need.needType} اهدا کنید`,
             "error",
           ),
         );
@@ -378,12 +301,13 @@ export function handleReserve(needId) {
 
     dispatch(setIsReserving(true));
 
-    const donorId = getState().app.currentUser?.id;
-    const donorName = getState().app.currentUser?.name;
-    const donorPhone = getState().app.currentUser?.mobile;
-    const donorBloodType = getState().app.currentUser?.bloodType;
+    const donorId = userInfo?.user?.id;
+    const donorName =
+      userInfo?.profile?.first_name + " " + userInfo?.profile?.last_name;
+    const donorPhone = userInfo?.profile?.mobile_number;
+    const donorBloodType = userInfo?.profile?.blood_group;
 
-    const updatedNeeds = getState().app.needs.map((n) => {
+    const updatedNeeds = needs.map((n) => {
       if (n.id === needId) {
         return {
           ...n,

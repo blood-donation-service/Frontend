@@ -4,12 +4,14 @@ import {
   handleResolveNeed,
 } from "../../sharedcomponents/appSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { useRequests } from "../../sharedcomponents/useRequests";
+import { useUserInfo } from "../../sharedcomponents/useUserInfo";
 
 export default function StaffDashboard() {
   const dispatch = useDispatch();
-  const { reservations, currentUser, needs } = useSelector(
-    (store) => store.app,
-  );
+  const { reservations } = useSelector((store) => store.app);
+  const { data: userInfo } = useUserInfo();
+  const { data: needs } = useRequests();
 
   return (
     <div className="animate-fade-in mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
@@ -19,14 +21,18 @@ export default function StaffDashboard() {
             پنل هماهنگی بحران بیمارستانی
           </span>
           <h2 className="mt-0.5 text-xl font-black text-slate-900">
-            {currentUser?.firstName
-              ? `${currentUser.firstName} ${currentUser.lastName}`
+            {userInfo?.profile?.first_name
+              ? `${userInfo?.profile?.first_name} ${userInfo?.profile?.last_name}`
               : "مرکز درمانی (مهمان)"}
           </h2>
           <p className="mt-1 text-xs text-slate-400">
             شناسه مرکز:{" "}
-            <b>{currentUser?.centerId || currentUser?.id || "CTR-110"}</b> | کد
-            ملی: <b>{currentUser?.nationalCode || "—"}</b>
+            <b>
+              {userInfo?.profile?.medical_center?.center_id ||
+                userInfo?.user?.id ||
+                "CTR-110"}
+            </b>{" "}
+            | کد ملی: <b>{userInfo?.user?.username || "—"}</b>
           </p>
         </div>
 
@@ -59,7 +65,9 @@ export default function StaffDashboard() {
         {needs.filter(
           (n) =>
             n.centerId ===
-            (currentUser?.centerId || currentUser?.id || "CTR-110"),
+            (userInfo?.profile?.medical_center?.center_id ||
+              userInfo?.user?.id ||
+              "CTR-110"),
         ).length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-12 text-center">
             <span className="text-4xl">🏥</span>
@@ -79,7 +87,9 @@ export default function StaffDashboard() {
               .filter(
                 (n) =>
                   n.centerId ===
-                  (currentUser?.centerId || currentUser?.id || "CTR-110"),
+                  (userInfo?.profile?.medical_center?.center_id ||
+                    userInfo?.user?.id ||
+                    "CTR-110"),
               )
               .map((need) => {
                 const pendingReservations = reservations.filter(

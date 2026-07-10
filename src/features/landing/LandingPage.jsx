@@ -1,14 +1,18 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { handleReserve, showToast } from "../../sharedcomponents/appSlice";
+import { useRequests } from "../../sharedcomponents/useRequests";
+import { useUserInfo } from "../../sharedcomponents/useUserInfo";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
-  const { needs, userRole, isReserving } = useSelector((store) => store.app);
+  const { isReserving } = useSelector((store) => store.app);
+  const { data: needs } = useRequests();
+  const { data: userInfo } = useUserInfo();
 
   return (
     <div className="flex flex-col items-center gap-16 px-4 py-12 md:py-20">
-      {(!userRole || userRole === "donor") && (
+      {(!userInfo?.user?.role || userInfo?.user?.role === "donor") && (
         <div className="animate-fade-in flex w-full max-w-5xl flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <span className="relative flex h-3 w-3">
@@ -44,7 +48,7 @@ export default function LandingPage() {
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-          {(userRole === "donor" || !userRole) && (
+          {(userInfo?.user?.role === "donor" || !userInfo?.user?.role) && (
             <Link
               to={isReserving ? "" : "/donor-dashboard"}
               className={`rounded-2xl bg-rose-600 px-8 py-4 text-sm font-extrabold text-white shadow-xl shadow-rose-600/20 transition-all active:scale-95 ${isReserving ? "cursor-wait" : "hover:bg-rose-700"}`}
@@ -52,11 +56,12 @@ export default function LandingPage() {
               ورود به بخش رزرو اهدای خون
             </Link>
           )}
-          {(userRole === "staff" || !userRole) && (
+          {(userInfo?.user?.role === "medical_staff" ||
+            !userInfo?.user?.role) && (
             <Link
-              to={`${!isReserving ? (!userRole ? "/login" : "/staff-dashboard") : ""}`}
+              to={`${!isReserving ? (!userInfo?.user?.role ? "/login" : "/staff-dashboard") : ""}`}
               onClick={() =>
-                !userRole &&
+                !userInfo?.user?.role &&
                 dispatch(
                   showToast(
                     "توجه",
@@ -65,7 +70,7 @@ export default function LandingPage() {
                   ),
                 )
               }
-              className={`${userRole === "staff" ? "bg-rose-600 text-white shadow-xl shadow-rose-600/20 hover:bg-rose-700" : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"} rounded-2xl px-8 py-4 text-sm font-extrabold transition-all active:scale-95 ${isReserving ? "cursor-wait" : ""}`}
+              className={`${userInfo?.user?.role === "medical_staff" ? "bg-rose-600 text-white shadow-xl shadow-rose-600/20 hover:bg-rose-700" : "border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50"} rounded-2xl px-8 py-4 text-sm font-extrabold transition-all active:scale-95 ${isReserving ? "cursor-wait" : ""}`}
             >
               ورود به پنل کادر درمان
             </Link>
@@ -85,7 +90,7 @@ export default function LandingPage() {
               اطلاعات دقیق مراجعه را ببینید.
             </p>
           </div>
-          {(userRole === "donor" || !userRole) && (
+          {(userInfo?.user?.role === "donor" || !userInfo?.user?.role) && (
             <Link
               to={isReserving ? "" : "/donor-dashboard"}
               className={`flex items-center gap-1 text-xs font-extrabold text-rose-600 ${isReserving ? "cursor-wait" : "hover:text-rose-700"}`}
@@ -98,16 +103,13 @@ export default function LandingPage() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {needs
-            .filter((n) => n.status === "active")
-            .slice(0, 4)
+            ?.filter((n) => n.status === "active")
+            .slice(0, 7)
             .map((need) => {
               const percentLeft =
-                (need.quantityRemaining / need.quantityRequired) * 100;
-              const isCritical =
-                need.quantityRemaining === 1 && need.status === "active";
-              const isClosed =
-                need.quantityRemaining === 0 || need.status === "completed";
-              const isExpired = need.status === "expired";
+                (need.remaining_capacity / need.total_capacity) * 100;
+              const isCritical = need.remaining_capacity === 1;
+              const isClosed = need.remaining_capacity === 0;
 
               return (
                 <div
@@ -121,16 +123,16 @@ export default function LandingPage() {
                   <div>
                     <div className="mb-3 flex items-start justify-between gap-4">
                       <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-lg font-black text-rose-600 shadow-inner">
-                        {need.bloodTypeRequired}
+                        {need.blood_group}
                       </span>
                       <div className="flex-1">
                         <h4 className="text-sm leading-snug font-extrabold text-slate-900">
                           {need.title}
                         </h4>
                         <p className="mt-1 flex items-center gap-1 text-[11px] text-slate-400">
-                          <span>🏥 {need.hospitalName}</span>
+                          <span>🏥 {need.medical_center.name}</span>
                           <span>•</span>
-                          <span>📍 {need.province}</span>
+                          <span>📍 {need.medical_center.province}</span>
                         </p>
                       </div>
                     </div>
@@ -144,23 +146,24 @@ export default function LandingPage() {
 
                     <div className="my-3 flex flex-col gap-1 rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-500">
                       <span>
-                        📍 <b>آدرس:</b> {need.address}
+                        📍 <b>آدرس:</b> {need.medical_center.address}
                       </span>
                       <span>
-                        📞 <b>تلفن تماس:</b> {need.phone}
+                        📞 <b>تلفن تماس:</b> {need.medical_center.phone_number}
                       </span>
                     </div>
                   </div>
 
                   <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
                     <span className="text-[10px] text-slate-400">
-                      {need.quantityRemaining} واحد مورد نیاز باقی‌مانده
+                      {need.remaining_capacity} واحد مورد نیاز باقی‌مانده
                     </span>
-                    {(!userRole || userRole === "donor") && (
+                    {(!userInfo?.user?.role ||
+                      userInfo?.user?.role === "donor") && (
                       <Link
-                        to={`${!userRole ? "/login" : ""}`}
+                        to={`${!userInfo?.user?.role ? "/login" : ""}`}
                         onClick={() => {
-                          !userRole
+                          !userInfo?.user?.role
                             ? dispatch(
                                 showToast(
                                   "توجه",
@@ -170,18 +173,17 @@ export default function LandingPage() {
                               )
                             : !isReserving &&
                               !isClosed &&
-                              !isExpired &&
                               dispatch(handleReserve(need.id));
                         }}
                         className={`flex gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
-                          isClosed || isExpired
+                          isClosed
                             ? "cursor-not-allowed bg-slate-100 text-slate-400 shadow-sm"
                             : isReserving
                               ? "cursor-wait bg-rose-100 text-rose-500 shadow-sm"
                               : "bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
                         }`}
                       >
-                        {isReserving && !isClosed && !isExpired ? (
+                        {isReserving && !isClosed ? (
                           <>
                             <span>در حال رزرو...</span>
                             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>

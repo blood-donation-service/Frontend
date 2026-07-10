@@ -1,11 +1,13 @@
 import { useDispatch, useSelector } from "react-redux";
 import { handleCancelReservation } from "../../sharedcomponents/appSlice";
+import { useRequests } from "../../sharedcomponents/useRequests";
+import { useUserInfo } from "../../sharedcomponents/useUserInfo";
 
 export default function DonorProfile() {
   const dispatch = useDispatch();
-  const { reservations, currentUser, needs } = useSelector(
-    (store) => store.app,
-  );
+  const { reservations } = useSelector((store) => store.app);
+  const { data: userInfo } = useUserInfo();
+  const { data: needs } = useRequests();
 
   return (
     <div className="animate-fade-in mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8">
@@ -16,11 +18,13 @@ export default function DonorProfile() {
       <div className="grid grid-cols-1 gap-6 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm md:grid-cols-3">
         <div className="flex flex-col items-center gap-4 border-l border-slate-50 pl-6 text-center md:col-span-1">
           <div className="flex h-20 w-20 items-center justify-center rounded-full bg-rose-50 text-3xl font-black text-rose-600 shadow-inner">
-            {currentUser?.bloodType || "O+"}
+            {userInfo?.profile?.blood_group || "O+"}
           </div>
           <div>
             <h3 className="text-lg font-extrabold text-slate-900">
-              {currentUser?.name || "کاربر نمونه مهمان"}
+              {userInfo?.profile?.first_name +
+                " " +
+                userInfo?.profile?.last_name || "کاربر نمونه مهمان"}
             </h3>
             <span className="text-xs text-slate-400">
               داوطلب جامعه داوطلبین
@@ -35,19 +39,19 @@ export default function DonorProfile() {
           {[
             {
               label: "کد ملی",
-              value: currentUser?.nationalId || "۱۲۳۴۵۶۷۸۹۰",
+              value: userInfo?.user?.username || "۱۲۳۴۵۶۷۸۹۰",
             },
             {
               label: "شماره موبایل",
-              value: currentUser?.mobile || "۰۹۱۲۱۱۱۱۱۱۱",
+              value: userInfo?.profile?.mobile_number || "۰۹۱۲۱۱۱۱۱۱۱",
             },
             {
               label: "استان محل سکونت",
-              value: currentUser?.province || "تهران",
+              value: userInfo?.profile?.province || "تهران",
             },
             {
               label: "دوران سلامت اهدای مجدد",
-              value: currentUser?.lockoutUntil
+              value: userInfo?.lockoutUntil
                 ? "تحت نقاهت ۳۰ روزه"
                 : "آماده اهدا و مجاز",
             },
