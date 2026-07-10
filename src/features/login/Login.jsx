@@ -87,15 +87,11 @@ export default function Login() {
         );
       }
     } catch (error) {
-      console.error("Login error:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        (typeof error.response?.data === "string"
-          ? error.response.data
-          : null) ||
-        error.message ||
-        "خطا در ورود. لطفاً دوباره تلاش کنید.";
+      const errorMessage = error.message.includes("Network Error")
+        ? "خطا در اتصال به اینترنت"
+        : error.message.includes("400")
+          ? "کد ملی یا کلمه عبور اشتباه است"
+          : "خطا در ورود. لطفاً دوباره تلاش کنید.";
       dispatch(showToast("خطا در ورود", errorMessage, "error"));
       setIsLoggingInFlow(false);
     } finally {

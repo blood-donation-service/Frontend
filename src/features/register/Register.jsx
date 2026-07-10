@@ -105,15 +105,20 @@ function Register() {
 
       navigate("/login");
     } catch (error) {
-      console.error("Registration error:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        error.response?.data?.detail ||
-        (typeof error.response?.data === "string"
-          ? error.response.data
-          : null) ||
-        error.message ||
-        "خطا در ثبت نام. لطفاً دوباره تلاش کنید.";
+      const duplicatedNationalCode = error.response?.data?.national_code
+        ? true
+        : false;
+      const duplicatedMobileNumber = error.response?.data?.mobile_number
+        ? true
+        : false;
+      const centerNotFound = error.response?.data?.center_id ? true : false;
+      const errorMessage = error.message.includes("Network Error")
+        ? "خطا در اتصال به اینترنت"
+        : centerNotFound
+          ? "هیچ مرکز درمانی با این شناسه یافت نشد."
+          : duplicatedMobileNumber || duplicatedNationalCode
+            ? `حساب کاربری دیگری با این ${duplicatedNationalCode ? "کد ملی" : ""} ${duplicatedMobileNumber && duplicatedNationalCode ? "و" : ""} ${duplicatedMobileNumber ? "شماره موبایل" : ""} موجود است.`
+            : "خطا در ثبت نام. لطفاً دوباره تلاش کنید.";
       dispatch(showToast("خطا در ثبت نام", errorMessage, "error"));
     } finally {
       setIsRegistering(false);
