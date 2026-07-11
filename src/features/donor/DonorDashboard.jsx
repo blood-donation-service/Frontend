@@ -5,6 +5,7 @@ import { Link, Navigate } from "react-router-dom";
 import { IRAN_PROVINCES } from "../../sharedcomponents/iranProvinces";
 import { useRequests } from "../../sharedcomponents/useRequests";
 import { useUserInfo } from "../../sharedcomponents/useUserInfo";
+import { useQueryClient } from "react-query";
 
 const IRAN_MAP_GRID = [
   ["آذربایجان غربی", "آذربایجان شرقی", "اردبیل", "گیلان", "مازندران", "گلستان"],
@@ -34,10 +35,10 @@ export default function DonorDashboard() {
   const { isReserving } = useSelector((store) => store.app);
   const { data: needs } = useRequests();
   const { data: userInfo } = useUserInfo();
+  const queryClient = useQueryClient();
 
   const [filterBloodType, setFilterBloodType] = useState("All");
   const [filterProvince, setFilterProvince] = useState("All");
-  const [searchHospital, setSearchHospital] = useState("");
 
   const filteredNeeds = needs?.filter((need) => {
     const matchesBlood =
@@ -45,55 +46,13 @@ export default function DonorDashboard() {
     const matchesProvince =
       filterProvince === "All" ||
       need.medical_center.province === filterProvince;
-    const matchesHospital = need.medical_center.name
-      .toLowerCase()
-      .includes(searchHospital.toLowerCase());
-    return matchesBlood && matchesProvince && matchesHospital;
+    return matchesBlood && matchesProvince;
   });
-  //argue with back
+
   if (userInfo?.user?.role === "medical_staff")
     return <Navigate to="/" replace />;
   return (
     <div className="animate-fade-in mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      {userInfo?.lockoutUntil &&
-        new Date(userInfo.lockoutUntil) > new Date() && (
-          <div className="animate-fade-in flex flex-col items-start justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm md:flex-row md:items-center">
-            <div className="flex items-start gap-4">
-              <div className="rounded-2xl bg-amber-100 p-2.5 text-amber-700">
-                <svg
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
-              </div>
-              <div>
-                <h4 className="text-sm font-bold text-amber-900">
-                  وضعیت موقت عدم امکان اهدای خون به دلیل اهدای اخیر
-                </h4>
-                <p className="mt-1 max-w-2xl text-xs text-amber-700">
-                  با تشکر از همکاری شایسته شما! به دلیل اینکه شما به تازگی
-                  فرآیند اهدای خون را با موفقیت در سیستم تایید کرده‌اید، طبق
-                  پروتکل‌های پزشکی برای حفظ تندرستی خود به مدت ۳۰ روز در دوران
-                  نقاهت خواهید بود.
-                </p>
-              </div>
-            </div>
-            <div className="text-right whitespace-nowrap">
-              <span className="block rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-800">
-                {`باقی مانده: ${new Date(userInfo.lockoutUntil) - new Date() > 0 ? Math.ceil(new Date(userInfo.lockoutUntil) - new Date() / (1000 * 60 * 60 * 24)) : 0} روز`}
-              </span>
-            </div>
-          </div>
-        )}
-
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-lg font-black text-rose-600">
@@ -116,25 +75,6 @@ export default function DonorDashboard() {
             <h4 className="border-b border-slate-50 pb-3 text-sm font-black text-slate-950">
               فیلترهای هوشمند جستجو
             </h4>
-
-            <div>
-              <label className="mb-2 block text-xs font-bold text-slate-500">
-                جستجوی نام بیمارستان
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="مثال: امام خمینی..."
-                  value={searchHospital}
-                  onChange={(e) => setSearchHospital(e.target.value)}
-                  className={`w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pr-10 pl-4 text-xs focus:border-rose-500 focus:outline-none ${isReserving ? "cursor-wait" : ""}`}
-                  disabled={isReserving}
-                />
-                <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-sm text-slate-400">
-                  🔍
-                </span>
-              </div>
-            </div>
 
             <div>
               <label className="mb-2 block text-xs font-bold text-slate-500">
@@ -409,7 +349,14 @@ export default function DonorDashboard() {
                             )
                           : !isReserving &&
                             !isClosed &&
-                            dispatch(handleReserve(need.id));
+                            dispatch(
+                              handleReserve(
+                                need.id,
+                                needs,
+                                userInfo,
+                                queryClient,
+                              ),
+                            );
                       }}
                       className={`mr-auto flex w-fit items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black transition-all ${
                         isClosed

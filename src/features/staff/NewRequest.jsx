@@ -56,51 +56,28 @@ export default function NewRequest() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                گروه خونی مورد نیاز
-              </label>
-              <select
-                value={newNeedForm.bloodTypeRequired}
-                onChange={(e) =>
-                  setNewNeedForm((prev) => ({
-                    ...prev,
-                    bloodTypeRequired: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs focus:border-rose-500 focus:outline-none"
-                required
-              >
-                {["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"].map(
-                  (type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ),
-                )}
-              </select>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-bold text-slate-600">
-                نوع نیاز
-              </label>
-              <select
-                value={newNeedForm.needType}
-                onChange={(e) =>
-                  setNewNeedForm((prev) => ({
-                    ...prev,
-                    needType: e.target.value,
-                  }))
-                }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs focus:border-rose-500 focus:outline-none"
-                required
-              >
-                <option value="خون کامل">خون کامل</option>
-                <option value="پلاکت">پلاکت</option>
-                <option value="پلاسما">پلاسما</option>
-              </select>
-            </div>
+            <label className="mb-1.5 block text-xs font-bold text-slate-600">
+              گروه خونی مورد نیاز
+            </label>
+            <select
+              value={newNeedForm.bloodTypeRequired}
+              onChange={(e) =>
+                setNewNeedForm((prev) => ({
+                  ...prev,
+                  bloodTypeRequired: e.target.value,
+                }))
+              }
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs focus:border-rose-500 focus:outline-none"
+              required
+            >
+              {["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"].map(
+                (type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ),
+              )}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
