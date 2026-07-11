@@ -1,12 +1,13 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { handleLogout, setRegisterRole } from "./appSlice";
+import { useUserInfo } from "./useUserInfo";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { currentUser, userRole } = useSelector((store) => store.app);
   const { pathname } = useLocation();
+  const { data: userInfo } = useUserInfo();
 
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 shadow-sm backdrop-blur-md">
@@ -61,7 +62,7 @@ export default function Navbar() {
             >
               داشبورد کادر درمان
             </NavLink>
-            {currentUser && userRole === "donor" && (
+            {userInfo?.user?.role && userInfo?.user?.role === "donor" && (
               <NavLink
                 to={"/donor-profile"}
                 className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${pathname === "donor-profile" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
@@ -72,14 +73,16 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {userRole ? (
+            {userInfo?.user?.role ? (
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col text-left lg:flex">
                   <span className="text-right text-xs text-slate-400">
                     خوش آمدید،
                   </span>
                   <span className="text-right text-sm font-bold text-slate-700">
-                    {currentUser.name}
+                    {userInfo?.profile?.first_name +
+                      " " +
+                      userInfo?.profile?.last_name}
                   </span>
                 </div>
                 <button

@@ -3,6 +3,8 @@ import { handleReserve, showToast } from "../../sharedcomponents/appSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Navigate } from "react-router-dom";
 import { IRAN_PROVINCES } from "../../sharedcomponents/iranProvinces";
+import { useRequests } from "../../sharedcomponents/useRequests";
+import { useUserInfo } from "../../sharedcomponents/useUserInfo";
 
 const IRAN_MAP_GRID = [
   ["آذربایجان غربی", "آذربایجان شرقی", "اردبیل", "گیلان", "مازندران", "گلستان"],
@@ -29,30 +31,32 @@ const MAP_H = IRAN_MAP_GRID.length * CELL_H;
 
 export default function DonorDashboard() {
   const dispatch = useDispatch();
-  const { needs, currentUser, isReserving, userRole } = useSelector(
-    (store) => store.app,
-  );
+  const { isReserving } = useSelector((store) => store.app);
+  const { data: needs } = useRequests();
+  const { data: userInfo } = useUserInfo();
 
   const [filterBloodType, setFilterBloodType] = useState("All");
   const [filterProvince, setFilterProvince] = useState("All");
   const [searchHospital, setSearchHospital] = useState("");
 
-  const filteredNeeds = needs.filter((need) => {
+  const filteredNeeds = needs?.filter((need) => {
     const matchesBlood =
-      filterBloodType === "All" || need.bloodTypeRequired === filterBloodType;
+      filterBloodType === "All" || need.blood_group === filterBloodType;
     const matchesProvince =
-      filterProvince === "All" || need.province === filterProvince;
-    const matchesHospital = need.hospitalName
+      filterProvince === "All" ||
+      need.medical_center.province === filterProvince;
+    const matchesHospital = need.medical_center.name
       .toLowerCase()
       .includes(searchHospital.toLowerCase());
     return matchesBlood && matchesProvince && matchesHospital;
   });
-
-  if (userRole === "staff") return <Navigate to="/" replace />;
+  //argue with back
+  if (userInfo?.user?.role === "medical_staff")
+    return <Navigate to="/" replace />;
   return (
     <div className="animate-fade-in mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-      {currentUser?.lockoutUntil &&
-        new Date(currentUser.lockoutUntil) > new Date() && (
+      {userInfo?.lockoutUntil &&
+        new Date(userInfo.lockoutUntil) > new Date() && (
           <div className="animate-fade-in flex flex-col items-start justify-between gap-4 rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm md:flex-row md:items-center">
             <div className="flex items-start gap-4">
               <div className="rounded-2xl bg-amber-100 p-2.5 text-amber-700">
@@ -84,7 +88,7 @@ export default function DonorDashboard() {
             </div>
             <div className="text-right whitespace-nowrap">
               <span className="block rounded-xl bg-amber-100 px-3 py-1.5 text-xs font-black text-amber-800">
-                {`باقی مانده: ${new Date(currentUser.lockoutUntil) - new Date() > 0 ? Math.ceil(new Date(currentUser.lockoutUntil) - new Date() / (1000 * 60 * 60 * 24)) : 0} روز`}
+                {`باقی مانده: ${new Date(userInfo.lockoutUntil) - new Date() > 0 ? Math.ceil(new Date(userInfo.lockoutUntil) - new Date() / (1000 * 60 * 60 * 24)) : 0} روز`}
               </span>
             </div>
           </div>
@@ -93,7 +97,7 @@ export default function DonorDashboard() {
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 text-lg font-black text-rose-600">
-            {currentUser?.bloodType || "مهمان"}
+            {userInfo?.profile.blood_group || "مهمان"}
           </div>
           <div>
             <h2 className="text-xl font-black text-slate-900">
@@ -261,14 +265,14 @@ export default function DonorDashboard() {
         <div className="flex flex-col gap-6 lg:col-span-2">
           <div className="flex items-center justify-between">
             <span className="text-xs text-slate-500">
-              یافت شده: <b>{filteredNeeds.length} مورد فعال</b>
+              یافت شده: <b>{filteredNeeds?.length} مورد فعال</b>
             </span>
             <span className="text-xs text-slate-400">
               آخرین بروزرسانی: هم‌اکنون
             </span>
           </div>
 
-          {filteredNeeds.length === 0 ? (
+          {filteredNeeds?.length === 0 ? (
             <div className="flex flex-col items-center gap-4 rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
               <span className="text-4xl">🔍</span>
               <h4 className="text-sm font-bold text-slate-900">
@@ -280,14 +284,11 @@ export default function DonorDashboard() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {filteredNeeds.map((need) => {
+              {filteredNeeds?.map((need) => {
                 const percentLeft =
-                  (need.quantityRemaining / need.quantityRequired) * 100;
-                const isCritical =
-                  need.quantityRemaining === 1 && need.status === "active";
-                const isClosed =
-                  need.quantityRemaining === 0 || need.status === "completed";
-                const isExpired = need.status === "expired";
+                  (need.remaining_capacity / need.total_capacity) * 100;
+                const isCritical = need.remaining_capacity === 1;
+                const isClosed = need.remaining_capacity === 0;
 
                 return (
                   <div
@@ -297,9 +298,7 @@ export default function DonorDashboard() {
                         ? "border-rose-400 ring-2 ring-rose-50/50"
                         : isClosed
                           ? "border-slate-100 opacity-75"
-                          : isExpired
-                            ? "border-amber-200"
-                            : "border-slate-100 hover:border-slate-200"
+                          : "border-slate-100 hover:border-slate-200"
                     }`}
                   >
                     <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
@@ -308,25 +307,23 @@ export default function DonorDashboard() {
                           className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl font-black shadow-inner ${
                             isClosed
                               ? "bg-slate-100 text-slate-400"
-                              : isExpired
-                                ? "bg-amber-50 text-amber-500"
-                                : "bg-rose-500 text-white shadow-rose-500/10"
+                              : "bg-rose-500 text-white shadow-rose-500/10"
                           }`}
                         >
-                          {need.bloodTypeRequired}
+                          {need.blood_group}
                         </span>
                         <div>
                           <h3 className="text-sm leading-snug font-extrabold text-slate-900 md:text-base">
                             {need.title}
                           </h3>
                           <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-slate-400">
-                            <span>🏥 {need.hospitalName}</span>
+                            <span>🏥 {need.medical_center.name}</span>
                             <span>•</span>
-                            <span>📍 {need.province}</span>
+                            <span>📍 {need.medical_center.province}</span>
                             <span>•</span>
                             <span>
                               ⏱️{" "}
-                              {new Date(need.createdAt).toLocaleTimeString(
+                              {new Date(need.created_at).toLocaleTimeString(
                                 "fa-IR",
                                 {
                                   hour: "2-digit",
@@ -344,17 +341,12 @@ export default function DonorDashboard() {
                             نیاز برطرف شده
                           </span>
                         )}
-                        {isExpired && (
-                          <span className="rounded-lg border border-amber-100 bg-amber-50 px-2 py-1 text-[10px] font-bold text-amber-700">
-                            منقضی شده (مهلت ۲ روزه)
-                          </span>
-                        )}
                         {isCritical && (
                           <span className="animate-pulse rounded-lg bg-rose-100 px-2 py-1 text-[10px] font-bold text-rose-700">
                             بسیار بحرانی (۱ واحد مانده)
                           </span>
                         )}
-                        {!isClosed && !isExpired && !isCritical && (
+                        {!isClosed && !isCritical && (
                           <span className="rounded-lg border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-bold text-blue-700">
                             فعال و معتبر
                           </span>
@@ -368,13 +360,13 @@ export default function DonorDashboard() {
                           آدرس دقیق مراجعه:
                         </span>
                         <p className="leading-relaxed font-medium text-slate-600">
-                          {need.address}
+                          {need.medical_center.address}
                         </p>
                       </div>
                       <div className="flex flex-col gap-1 text-xs whitespace-nowrap">
                         <span className="text-slate-400">تلفن هماهنگی:</span>
                         <span className="font-bold text-slate-600">
-                          {need.phone}
+                          {need.medical_center.phone_number}
                         </span>
                       </div>
                     </div>
@@ -385,8 +377,8 @@ export default function DonorDashboard() {
                           پیشرفت ظرفیت تأمین شده:
                         </span>
                         <span className="text-slate-700">
-                          {need.quantityRequired - need.quantityRemaining} از{" "}
-                          {need.quantityRequired} واحد (
+                          {need.total_capacity - need.remaining_capacity} از{" "}
+                          {need.total_capacity} واحد (
                           {Math.round(100 - percentLeft)}%)
                         </span>
                       </div>
@@ -405,9 +397,9 @@ export default function DonorDashboard() {
                     </div>
 
                     <Link
-                      to={`${!userRole ? "/login" : ""}`}
+                      to={`${!userInfo?.user?.role ? "/login" : ""}`}
                       onClick={() => {
-                        !userRole
+                        !userInfo?.user?.role
                           ? dispatch(
                               showToast(
                                 "توجه",
@@ -417,18 +409,17 @@ export default function DonorDashboard() {
                             )
                           : !isReserving &&
                             !isClosed &&
-                            !isExpired &&
                             dispatch(handleReserve(need.id));
                       }}
                       className={`mr-auto flex w-fit items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black transition-all ${
-                        isClosed || isExpired
+                        isClosed
                           ? "cursor-not-allowed bg-slate-100 text-slate-400 shadow-sm"
                           : isReserving
                             ? "cursor-wait bg-rose-100 text-rose-500 shadow-sm"
                             : "bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
                       }`}
                     >
-                      {isReserving && !isClosed && !isExpired ? (
+                      {isReserving && !isClosed ? (
                         <>
                           <span>در حال رزرو...</span>
                           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>

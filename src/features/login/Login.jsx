@@ -1,14 +1,11 @@
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import {
-  setRegisterRole,
-  setUserRole,
-  showToast,
-  specifyUserInfo,
-} from "../../sharedcomponents/appSlice";
-import { useDispatch, useSelector } from "react-redux";
+import { setRegisterRole, showToast } from "../../sharedcomponents/appSlice";
+import { useDispatch } from "react-redux";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import api from "../api/axios";
+import { useUserInfo } from "../../sharedcomponents/useUserInfo";
+import { useQueryClient } from "react-query";
 
 const setAuthCookie = (token) => {
   document.cookie = `access_token=${token}; path=/;  SameSite=Lax`;
@@ -18,19 +15,18 @@ export default function Login() {
   const { register, handleSubmit, setValue } = useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { userRole } = useSelector((store) => store.app);
+  const { data: userInfo } = useUserInfo();
+  const queryClient = useQueryClient();
 
   const [LogForm, setLogForm] = useState({
     id: "",
     password: "",
   });
   const [isLogining, setIsLogining] = useState(false);
-  const [isLoggingInFlow, setIsLoggingInFlow] = useState(false);
 
   const onSubmit = async () => {
     if (isLogining) return;
     setIsLogining(true);
-    setIsLoggingInFlow(true);
     try {
       if (!handleFrontErrors()) return;
 
@@ -41,42 +37,15 @@ export default function Login() {
 
       const response = await api.post("/api/auth/login/", payload);
       if (response.data.access) {
-        setAuthCookie(response.data.access);
+        await setAuthCookie(response.data.access);
       }
-      const response2 = await api.get("/api/accounts/me/");
-      const { user, profile } = response2.data;
-      if (user.role === "donor") {
-        const reExteractedDonorData = {
-          id: user?.id,
-          name: profile?.first_name + " " + profile?.last_name,
-          nationalCode: user?.username,
-          mobileNumber: profile?.mobile_number,
-          bloodGroup: profile?.blood_group,
-          province: profile?.province,
-        };
-        dispatch(specifyUserInfo(reExteractedDonorData));
-        dispatch(setUserRole("donor"));
+      await queryClient.invalidateQueries(["fetch_user_info"]);
+      if (response.data.user.role === "donor") {
         navigate("/donor-dashboard");
         dispatch(
           showToast("خوش آمدید", `به عنوان اهداکننده وارد شدید.`, "success"),
         );
       } else {
-        const reExteractedStaffData = {
-          id: user?.id,
-          name: profile?.first_name + " " + profile?.last_name,
-          nationalCode: user?.username,
-          mobileNumber: profile?.mobile_number,
-          medicalCenter: {
-            id: profile?.medical_center?.id,
-            centerId: profile?.medical_center?.center_id,
-            name: profile?.medical_center?.name,
-            postalCode: profile?.medical_center?.postal_code,
-            address: profile?.medical_center?.address,
-            phoneNumber: profile?.medical_center?.phone_number,
-          },
-        };
-        dispatch(specifyUserInfo(reExteractedStaffData));
-        dispatch(setUserRole("staff"));
         navigate("/staff-dashboard");
         dispatch(
           showToast(
@@ -93,9 +62,6 @@ export default function Login() {
           ? "کد ملی یا کلمه عبور اشتباه است"
           : "خطا در ورود. لطفاً دوباره تلاش کنید.";
       dispatch(showToast("خطا در ورود", errorMessage, "error"));
-      setIsLoggingInFlow(false);
-    } finally {
-      setIsLogining(false);
     }
   };
 
@@ -107,7 +73,7 @@ export default function Login() {
     return true;
   }
 
-  if (userRole && !isLoggingInFlow) return <Navigate to="/" replace />;
+  if (userInfo?.user?.role && !isLogining) return <Navigate to="/" replace />;
   return (
     <div className="flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">

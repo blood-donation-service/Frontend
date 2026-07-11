@@ -5,12 +5,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import api from "../api/axios";
 import { IRAN_PROVINCES } from "../../sharedcomponents/iranProvinces";
+import { useUserInfo } from "../../sharedcomponents/useUserInfo";
 
 function Register() {
   const { register, handleSubmit, setValue } = useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { registerRole, userRole } = useSelector((store) => store.app);
+  const { registerRole } = useSelector((store) => store.app);
+  const { data: userInfo } = useUserInfo();
 
   const [donorRegForm, setDonorRegForm] = useState({
     firstName: "",
@@ -250,7 +252,7 @@ function Register() {
     return true;
   }
 
-  if (userRole) return <Navigate to="/" replace />;
+  if (userInfo?.user?.role) return <Navigate to="/" replace />;
   return (
     <div className="flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-xl rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">

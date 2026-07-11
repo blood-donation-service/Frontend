@@ -47,7 +47,6 @@ export default function App() {
       dir="rtl"
     >
       <ToastNotifications />
-
       <BrowserRouter>
         <RouteProgress />
         <Navbar />
