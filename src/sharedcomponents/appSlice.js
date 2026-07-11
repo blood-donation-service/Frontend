@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { useUserInfo } from "./useUserInfo";
-import { useRequests } from "./useRequests";
+import api from "../features/api/axios";
 
 const INITIAL_RESERVATIONS = [
   {
@@ -227,31 +226,23 @@ export function showToast(title, message, type = "success") {
   };
 }
 
-export function handleReserve(needId) {
-  return async function (dispatch, getState) {
-    const { needs } = useRequests();
-    const { data: userInfo } = useUserInfo();
+export function handleReserve(needId, needs, userInfo, queryClient) {
+  return async function (dispatch) {
     const need = needs.find((n) => n.id === needId);
-    if (!need) return;
-
-    if (userInfo.lockoutUntil && new Date(userInfo.lockoutUntil) > new Date()) {
-      const now = new Date();
-      const lockoutUntil = new Date(userInfo.lockoutUntil);
-      const diffMs = lockoutUntil - now;
-      const daysLeft =
-        diffMs > 0 ? Math.ceil(diffMs / (1000 * 60 * 60 * 24)) : 0;
-
-      dispatch(
-        showToast(
-          "عدم امکان ثبت رزرو",
-          `به دلیل اهدای اخیر، شما در دوران نقاهت به سر می‌برید و تا ${daysLeft} روز آینده نمیتوانید خون اهدا کنید.`,
-          "error",
-        ),
-      );
+    if (!need) {
+      dispatch(showToast("خطا در ثبت رزرو", "لطفا دوباره تلاش کنید", "error"));
       return;
     }
+    console.log(needId);
+    const donor = parseBloodType(userInfo?.profile?.blood_group);
+    const recipient = parseBloodType(need.blood_group);
 
-    if (need.quantityRemaining <= 0) {
+    const antigenOk = [...donor.antigens].every((ag) =>
+      recipient.antigens.has(ag),
+    );
+    const rhOk = donor.rh === "-" || recipient.rh === "+";
+
+    if (need.remaining_capacity <= 0) {
       dispatch(
         showToast(
           "عدم ظرفیت",
@@ -262,88 +253,42 @@ export function handleReserve(needId) {
       return;
     }
 
-    const donor = parseBloodType(userInfo?.profile?.blood_group);
-    const recipient = parseBloodType(need.bloodTypeRequired);
-
-    if (need.needType === "خون کامل") {
-      const antigenOk = [...donor.antigens].every((ag) =>
-        recipient.antigens.has(ag),
+    if (!antigenOk || !rhOk) {
+      dispatch(
+        showToast(
+          "عدم تطابق گروه خونی",
+          `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${need.blood_group} خون اهدا کنید`,
+          "error",
+        ),
       );
-      const rhOk = donor.rh === "-" || recipient.rh === "+";
-      if (!antigenOk || !rhOk) {
-        dispatch(
-          showToast(
-            "عدم تطابق گروه خونی",
-            `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${need.bloodTypeRequired} خون اهدا کنید`,
-            "error",
-          ),
-        );
-        return;
-      }
-    }
-
-    if (need.needType === "پلاسما" || need.needType === "پلاکت") {
-      const antigenOk = [...recipient.antigens].every((ag) =>
-        donor.antigens.has(ag),
-      );
-      const rhOk = recipient.rh === "+" || donor.rh === "-";
-      if (!antigenOk || !rhOk) {
-        dispatch(
-          showToast(
-            "عدم تطابق گروه خونی",
-            `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${need.bloodTypeRequired} ${need.needType} اهدا کنید`,
-            "error",
-          ),
-        );
-        return;
-      }
+      return;
     }
 
     dispatch(setIsReserving(true));
 
-    const donorId = userInfo?.user?.id;
-    const donorName =
-      userInfo?.profile?.first_name + " " + userInfo?.profile?.last_name;
-    const donorPhone = userInfo?.profile?.mobile_number;
-    const donorBloodType = userInfo?.profile?.blood_group;
-
-    const updatedNeeds = needs.map((n) => {
-      if (n.id === needId) {
-        return {
-          ...n,
-          quantityRemaining: n.quantityRemaining - 1,
-        };
-      }
-      return n;
-    });
-
-    const newReservation = {
-      id: "res-" + Date.now(),
-      medicalNeedId: needId,
-      donorId: donorId,
-      donorName: donorName,
-      donorPhone: donorPhone,
-      donorBloodType: donorBloodType,
-      reservedQuantity: 1,
-      status: "registered",
-      createdAt: new Date().toISOString(),
+    const payload = {
+      pk: needId,
     };
+    try {
+      await api.post(`/blood/requests/${needId}/donate/`, payload);
 
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    dispatch(
-      doReservation(updatedNeeds, [
-        newReservation,
-        ...getState().app.reservations,
-      ]),
-    );
-    dispatch(
-      showToast(
-        "رزرو با موفقیت ثبت شد",
-        `نوبت شما ثبت گردید. همکاران ما در ${need.hospitalName} با شما تماس خواهند گرفت.`,
-        "success",
-      ),
-    );
-    dispatch(setIsReserving(false));
+      dispatch(
+        showToast(
+          "رزرو با موفقیت ثبت شد",
+          `نوبت شما ثبت گردید. همکاران ما در ${need.medical_center.name} با شما تماس خواهند گرفت.`,
+          "success",
+        ),
+      );
+
+      await queryClient.invalidateQueries(["fetch_needs"]);
+    } catch (error) {
+      const errorMessage = error.message.includes("Network Error")
+        ? "خطا در اتصال به اینترنت"
+        : "مشکلی پیش آمد. لطفا دوباره تلاش کنید.";
+      dispatch(showToast("خطا در رزرو", errorMessage, "error"));
+    } finally {
+      dispatch(setIsReserving(false));
+    }
   };
 }
 

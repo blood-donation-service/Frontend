@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { handleReserve, showToast } from "../../sharedcomponents/appSlice";
 import { useRequests } from "../../sharedcomponents/useRequests";
 import { useUserInfo } from "../../sharedcomponents/useUserInfo";
+import { useQueryClient } from "react-query";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
   const { isReserving } = useSelector((store) => store.app);
   const { data: needs } = useRequests();
   const { data: userInfo } = useUserInfo();
+  const queryClient = useQueryClient();
 
   return (
     <div className="flex flex-col items-center gap-16 px-4 py-12 md:py-20">
@@ -23,8 +25,10 @@ export default function LandingPage() {
               اعلان اضطراری زمان واقعی:
             </span>
             <span className="hidden text-xs text-slate-500 lg:inline">
-              نیاز شدید به خون گروه A- در بیمارستان شریعتی تهران. با اهدای فوری
-              نجات‌دهنده باشید!
+              نیاز شدید به خون گروه {`${needs[0].blood_group}`} در{" "}
+              {`${needs[0].medical_center.name}`}{" "}
+              {`${needs[0].medical_center.province}`}. با اهدای فوری نجات‌دهنده
+              باشید!
             </span>
           </div>
           <Link
@@ -43,8 +47,8 @@ export default function LandingPage() {
         </h1>
         <p className="max-w-2xl text-base text-slate-500 md:text-lg">
           مِدنیاز، سامانه‌ای هوشمند، ایمن و مستقل از سرویس‌های واسط خارجی است که
-          در مواقع اضطراری فرآیند درخواست تا رزرو خون و پلاسما را بدون تاخیر
-          هدایت می‌کند.
+          در مواقع اضطراری فرآیند درخواست تا رزرو خون را بدون تاخیر هدایت
+          می‌کند.
         </p>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
@@ -173,7 +177,14 @@ export default function LandingPage() {
                               )
                             : !isReserving &&
                               !isClosed &&
-                              dispatch(handleReserve(need.id));
+                              dispatch(
+                                handleReserve(
+                                  need.id,
+                                  needs,
+                                  userInfo,
+                                  queryClient,
+                                ),
+                              );
                         }}
                         className={`flex gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
                           isClosed
@@ -269,7 +280,7 @@ export default function LandingPage() {
           },
           {
             label: "نیازهای فعال اورژانسی",
-            value: "۴ درخواست",
+            value: `${needs.length} درخواست`,
             icon: "heart",
             bg: "bg-rose-50 text-rose-600",
           },

@@ -49,12 +49,6 @@ export default function DonorProfile() {
               label: "استان محل سکونت",
               value: userInfo?.profile?.province || "تهران",
             },
-            {
-              label: "دوران سلامت اهدای مجدد",
-              value: userInfo?.lockoutUntil
-                ? "تحت نقاهت ۳۰ روزه"
-                : "آماده اهدا و مجاز",
-            },
           ].map((item, i) => (
             <div
               key={i}
