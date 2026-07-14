@@ -1,13 +1,56 @@
-import { useDispatch, useSelector } from "react-redux";
-import { handleCancelReservation } from "../../sharedcomponents/appSlice";
-import { useRequests } from "../../sharedcomponents/useRequests";
+import { useDispatch } from "react-redux";
 import { useUserInfo } from "../../sharedcomponents/useUserInfo";
+import useDonorReservation from "../../sharedcomponents/useDonorReservation";
+import api from "../api/axios";
+import { useQueryClient } from "react-query";
+import { useEffect, useState } from "react";
+import FilteredNeedsLoader from "../../sharedcomponents/FilteredNeedsLoader";
+import { showToast } from "../../sharedcomponents/appSlice";
+import PageLoader from "../../sharedcomponents/PageLoader";
 
 export default function DonorProfile() {
   const dispatch = useDispatch();
-  const { reservations } = useSelector((store) => store.app);
+  const queryClient = useQueryClient();
   const { data: userInfo } = useUserInfo();
-  const { data: needs } = useRequests();
+  const { data: reservations, isLoading: reservationsIsLoading } =
+    useDonorReservation();
+  const [isLoading, setIsLoading] = useState(false);
+
+  async function handleCancelReservation(resId) {
+    setIsLoading(true);
+    try {
+      const payload = { pk: resId };
+      await api.patch(`/blood/donations/${resId}/`, payload);
+      dispatch(
+        showToast(
+          "لغو رزرو",
+          "درخواست شما با موفقیت لغو و ظرفیت آزاد شد.",
+          "success",
+        ),
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["fetch_donor_reserve"],
+      });
+    } catch (error) {
+      const errorMessage = error.message.includes("Network Error")
+        ? "خطا در اتصال به اینترنت"
+        : "خطا در کنسل کردن رزرو. لطفا دوباره تلاش کنید.";
+      dispatch(showToast("خطا در کنسل کردن رزرو", errorMessage, "error"));
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  useEffect(() => {
+    try {
+      queryClient.invalidateQueries({
+        queryKey: ["fetch_donor_reserve"],
+      });
+    } catch {
+      return <PageLoader variant={"donor-profile"} />;
+    }
+  }, [queryClient]);
+  if (reservationsIsLoading) return <PageLoader variant={"donor-profile"} />;
 
   return (
     <div className="animate-fade-in mx-auto flex max-w-4xl flex-col gap-8 px-4 py-8">
@@ -64,74 +107,82 @@ export default function DonorProfile() {
           ))}
         </div>
       </div>
+      {reservationsIsLoading ? (
+        <FilteredNeedsLoader />
+      ) : (
+        <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
+          <h3 className="mb-4 text-base font-black text-slate-900">
+            رزروهای ثبت شده شما
+          </h3>
 
-      <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 text-base font-black text-slate-900">
-          رزروهای ثبت شده شما
-        </h3>
+          {reservations?.length === 0 ? (
+            <p className="py-6 text-center text-xs text-slate-400">
+              هنوز نوبت رزروی ندارید.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {reservations?.map((res) => {
+                return (
+                  <div
+                    key={res.id}
+                    className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-100 p-4 md:flex-row md:items-center"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-xs font-bold text-slate-600">
+                        🩸
+                      </span>
+                      <div>
+                        <h4 className="text-xs font-black text-slate-800">
+                          {res?.request?.title || "درخواست اورژانسی بیمارستان"}
+                        </h4>
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          {res?.request.medical_center?.name || "مرکز نامشخص"} •
+                          تاریخ رزرو:{" "}
+                          {new Date(
+                            res?.request?.created_at,
+                          ).toLocaleDateString("fa-IR")}
+                        </p>
+                      </div>
+                    </div>
 
-        {reservations.length === 0 ? (
-          <p className="py-6 text-center text-xs text-slate-400">
-            هنوز نوبت رزروی ندارید.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {reservations.map((res) => {
-              const need = needs.find((n) => n.id === res.medicalNeedId);
-              return (
-                <div
-                  key={res.id}
-                  className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-100 p-4 md:flex-row md:items-center"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-xs font-bold text-slate-600">
-                      🩸
-                    </span>
-                    <div>
-                      <h4 className="text-xs font-black text-slate-800">
-                        {need?.title || "درخواست اورژانسی بیمارستان"}
-                      </h4>
-                      <p className="mt-0.5 text-[10px] text-slate-400">
-                        {need?.hospitalName || "مرکز نامشخص"} • تاریخ رزرو:{" "}
-                        {new Date(res.createdAt).toLocaleDateString("fa-IR")}
-                      </p>
+                    <div className="flex flex-wrap items-center gap-4">
+                      {res?.status === "pending" && (
+                        <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">
+                          در انتظار مراجعه
+                        </span>
+                      )}
+                      {res?.status === "donated" && (
+                        <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
+                          اهدای موفقیت آمیز شد
+                        </span>
+                      )}
+                      {res?.status === "cancelled" && (
+                        <span className="rounded-lg bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-700">
+                          لغو شده
+                        </span>
+                      )}
+                      {res?.status === "expired" && (
+                        <span className="rounded-lg bg-fuchsia-50 px-2.5 py-1 text-[10px] font-bold text-fuchsia-950">
+                          منقضی شده
+                        </span>
+                      )}
+                      {res?.status === "pending" && (
+                        <button
+                          disabled={isLoading}
+                          onClick={() => handleCancelReservation(res?.id)}
+                          className={`rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition-colors hover:cursor-pointer hover:bg-rose-100/50 hover:text-rose-700 ${isLoading ? "cursor-not-allowed" : ""}`}
+                        >
+                          کنسل کردن
+                        </button>
+                      )}
                     </div>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-4">
-                    {res.status === "registered" && (
-                      <span className="rounded-lg bg-amber-50 px-2.5 py-1 text-[10px] font-bold text-amber-700">
-                        در انتظار مراجعه
-                      </span>
-                    )}
-                    {res.status === "approved" && (
-                      <span className="rounded-lg bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-700">
-                        اهدای موفقیت آمیز شد
-                      </span>
-                    )}
-                    {res.status === "cancelled" && (
-                      <span className="rounded-lg bg-rose-50 px-2.5 py-1 text-[10px] font-bold text-rose-700">
-                        لغو شده
-                      </span>
-                    )}
-
-                    {res.status === "registered" && (
-                      <button
-                        onClick={() =>
-                          dispatch(handleCancelReservation(res.id))
-                        }
-                        className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-100/50 hover:text-rose-700"
-                      >
-                        کنسل کردن
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -42,29 +42,6 @@ const appSlice = createSlice({
     setIsReserving(state, action) {
       state.isReserving = action.payload;
     },
-    cancelReservation(state, action) {
-      const res = state.reservations.find((r) => r.id === action.payload);
-      if (!res) return;
-      // refetch needs from back
-      // state.needs = state.needs.map((need) => {
-      //   if (need.id === res.medicalNeedId) {
-      //     return {
-      //       ...need,
-      //       quantityRemaining: Math.min(
-      //         need.quantityRequired,
-      //         need.quantityRemaining + 1,
-      //       ),
-      //     };
-      //   }
-      //   return need;
-      // });
-      state.reservations = state.reservations.map((r) => {
-        if (r.id === action.payload) {
-          return { ...r, status: "cancelled" };
-        }
-        return r;
-      });
-    },
     doReservation: {
       prepare(updatedNeeds, updatedReservations) {
         return {
@@ -90,7 +67,6 @@ export const {
   updateToasts,
   setIsReserving,
   specifyUserInfo,
-  cancelReservation,
   doReservation,
   updateReservations,
   setRegisterRole,
@@ -145,19 +121,6 @@ export function handleCreateNeed(newNeedForm, navigate) {
         "ثبت درخواست جدید اورژانسی",
         "درخواست شما بلافاصله در سامانه و داشبورد اهداکنندگان منتشر شد.",
         "success",
-      ),
-    );
-  };
-}
-
-export function handleCancelReservation(resId) {
-  return async function (dispatch) {
-    dispatch(cancelReservation(resId));
-    dispatch(
-      showToast(
-        "لغو رزرو",
-        "درخواست شما با موفقیت لغو و ظرفیت آزاد شد.",
-        "warning",
       ),
     );
   };
