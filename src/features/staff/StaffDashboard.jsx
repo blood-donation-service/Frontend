@@ -62,7 +62,7 @@ export default function StaffDashboard() {
           درخواست‌های فعال ثبت شده توسط مرکز شما
         </h3>
 
-        {needs.filter(
+        {needs?.filter(
           (n) =>
             n.centerId ===
             (userInfo?.profile?.medical_center?.center_id ||
@@ -84,7 +84,7 @@ export default function StaffDashboard() {
         ) : (
           <div className="flex flex-col gap-6">
             {needs
-              .filter(
+              ?.filter(
                 (n) =>
                   n.centerId ===
                   (userInfo?.profile?.medical_center?.center_id ||

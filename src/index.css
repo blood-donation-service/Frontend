@@ -1,10 +1,79 @@
 @import "tailwindcss";
 @import "vazirmatn/Vazirmatn-font-face.css";
+@import "react-tooltip/dist/react-tooltip.css";
 
 @layer base {
   * {
     font-family: "Vazirmatn", sans-serif;
   }
+}
+
+@layer components {
+  .iran-map-wrapper svg path:not(.react-map-water),
+  .iran-map-wrapper svg polygon {
+    stroke: #cbd5e1;
+    stroke-width: 1.25;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .iran-map-wrapper
+    svg
+    path:not(.react-map-water):not(.iran-map-selected):hover,
+  .iran-map-wrapper svg polygon:not(.iran-map-selected):hover {
+    fill: #fecdd3 !important;
+    stroke: #e11d48;
+  }
+
+  .iran-map-container.iran-map-busy .iran-map-wrapper,
+  .iran-map-container.iran-map-busy
+    .iran-map-wrapper
+    svg
+    path:not(.react-map-water),
+  .iran-map-container.iran-map-busy .iran-map-wrapper svg polygon {
+    cursor: wait !important;
+    pointer-events: none;
+  }
+
+  .iran-map-container.iran-map-busy .iran-map-wrapper {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+  }
+}
+
+.react-map-badge h3 {
+  display: none !important;
+}
+
+.react-map-badge {
+  background-color: #f1f5f9 !important;
+  box-shadow: none !important;
+  border-radius: 8px !important;
+  min-width: 0 !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.react-map-badge h2 {
+  background-color: transparent !important;
+  padding: 6px 10px !important;
+  font-size: 11px !important;
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+
+[class*="styles-module_tooltip__"] {
+  background-color: #f1f5f9 !important;
+  border-radius: 8px !important;
+}
+
+[class*="styles-module_content__"] {
+  background-color: #f1f5f9 !important;
+  border-radius: 8px !important;
+  padding: 0 !important;
+}
+
+[class*="core-styles-module_arrow__"] {
+  display: none !important;
 }
 
 @layer utilities {

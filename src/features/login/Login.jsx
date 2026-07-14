@@ -41,12 +41,10 @@ export default function Login() {
       }
       await queryClient.invalidateQueries(["fetch_user_info"]);
       if (response.data.user.role === "donor") {
-        navigate("/donor-dashboard");
         dispatch(
           showToast("خوش آمدید", `به عنوان اهداکننده وارد شدید.`, "success"),
         );
       } else {
-        navigate("/staff-dashboard");
         dispatch(
           showToast(
             "ورود موفقیت‌آمیز پرسنل",
@@ -55,6 +53,7 @@ export default function Login() {
           ),
         );
       }
+      navigate("/");
     } catch (error) {
       const errorMessage = error.message.includes("Network Error")
         ? "خطا در اتصال به اینترنت"
@@ -62,6 +61,8 @@ export default function Login() {
           ? "کد ملی یا کلمه عبور اشتباه است"
           : "خطا در ورود. لطفاً دوباره تلاش کنید.";
       dispatch(showToast("خطا در ورود", errorMessage, "error"));
+    } finally {
+      setIsLogining(false);
     }
   };
 
@@ -73,7 +74,7 @@ export default function Login() {
     return true;
   }
 
-  if (userInfo?.user?.role && !isLogining) return <Navigate to="/" replace />;
+  if (userInfo?.user?.role) return <Navigate to="/" replace />;
   return (
     <div className="flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md rounded-3xl border border-slate-100 bg-white p-8 shadow-xl">

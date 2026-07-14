@@ -226,23 +226,25 @@ export function showToast(title, message, type = "success") {
   };
 }
 
-export function handleReserve(needId, needs, userInfo, queryClient) {
+export function handleReserve(
+  needId,
+  bloodType,
+  remaining,
+  hospitalName,
+  province,
+  userInfo,
+  queryClient,
+) {
   return async function (dispatch) {
-    const need = needs.find((n) => n.id === needId);
-    if (!need) {
-      dispatch(showToast("خطا در ثبت رزرو", "لطفا دوباره تلاش کنید", "error"));
-      return;
-    }
-    console.log(needId);
     const donor = parseBloodType(userInfo?.profile?.blood_group);
-    const recipient = parseBloodType(need.blood_group);
+    const recipient = parseBloodType(bloodType);
 
     const antigenOk = [...donor.antigens].every((ag) =>
       recipient.antigens.has(ag),
     );
     const rhOk = donor.rh === "-" || recipient.rh === "+";
 
-    if (need.remaining_capacity <= 0) {
+    if (remaining <= 0) {
       dispatch(
         showToast(
           "عدم ظرفیت",
@@ -257,7 +259,7 @@ export function handleReserve(needId, needs, userInfo, queryClient) {
       dispatch(
         showToast(
           "عدم تطابق گروه خونی",
-          `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${need.blood_group} خون اهدا کنید`,
+          `شما با گروه خونی ${userInfo?.profile?.blood_group} نمیتوانید به فردی با گروه خونی ${bloodType} خون اهدا کنید`,
           "error",
         ),
       );
@@ -275,16 +277,22 @@ export function handleReserve(needId, needs, userInfo, queryClient) {
       dispatch(
         showToast(
           "رزرو با موفقیت ثبت شد",
-          `نوبت شما ثبت گردید. همکاران ما در ${need.medical_center.name} با شما تماس خواهند گرفت.`,
+          `نوبت شما ثبت گردید. همکاران ما در ${hospitalName} با شما تماس خواهند گرفت.`,
           "success",
         ),
       );
 
+      await queryClient.invalidateQueries({
+        queryKey: ["fetch_filtered_needs"],
+      });
       await queryClient.invalidateQueries(["fetch_needs"]);
     } catch (error) {
-      const errorMessage = error.message.includes("Network Error")
-        ? "خطا در اتصال به اینترنت"
-        : "مشکلی پیش آمد. لطفا دوباره تلاش کنید.";
+      console.log(error.message);
+      const errorMessage = error.message.includes("400")
+        ? "شما قبلا این درخواست را رزرو کرده بودید"
+        : error.message.includes("Network Error")
+          ? "خطا در اتصال به اینترنت"
+          : "مشکلی پیش آمد. لطفا دوباره تلاش کنید.";
       dispatch(showToast("خطا در رزرو", errorMessage, "error"));
     } finally {
       dispatch(setIsReserving(false));
