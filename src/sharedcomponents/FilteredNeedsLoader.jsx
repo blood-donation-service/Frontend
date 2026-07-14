@@ -38,7 +38,7 @@ function BloodDropIcon({ className = "" }) {
 export default function FilteredNeedsLoader() {
   return (
     <div className="flex animate-fade-in flex-col gap-6">
-      <div className="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-rose-100 bg-gradient-to-b from-rose-50/60 via-white to-white p-10 shadow-sm">
+      <div className="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-rose-100 bg-linear-to-b from-rose-50/60 via-white to-white p-10 shadow-sm">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute top-8 right-12 h-2 w-2 animate-float-bob rounded-full bg-rose-300/70" />
           <div className="absolute top-20 left-10 h-1.5 w-1.5 animate-float-bob-slow rounded-full bg-rose-400/60" />
