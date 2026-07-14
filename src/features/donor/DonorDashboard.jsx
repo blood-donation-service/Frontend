@@ -8,6 +8,7 @@ import { useQueryClient } from "react-query";
 import { IranMap } from "react-iran-map";
 import { useFilteredRequests } from "../../sharedcomponents/useFilteredRequests";
 import PageLoader from "../../sharedcomponents/PageLoader";
+import FilteredNeedsLoader from "../../sharedcomponents/FilteredNeedsLoader";
 
 const PROVINCE_DATA = {
   ardabil: 1,
@@ -112,6 +113,7 @@ export default function DonorDashboard() {
   );
 
   const mapContainerRef = useRef(null);
+  const isBusy = isLoading || isReserving;
 
   const syncFiltersToUrl = (bloodType, province) => {
     const params = {};
@@ -163,7 +165,6 @@ export default function DonorDashboard() {
 
   if (userInfo?.user?.role === "medical_staff")
     return <Navigate to="/" replace />;
-  if (isLoading) return <PageLoader variant={"donor-dashboard"} />;
   return (
     <div className="animate-fade-in mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
@@ -199,8 +200,8 @@ export default function DonorDashboard() {
                     <button
                       key={type}
                       onClick={() => handleBloodTypeChange(type)}
-                      disabled={isReserving}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${filterBloodType === type ? "bg-rose-600 text-white" : isReserving ? "cursor-wait bg-slate-50 text-slate-600" : "cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+                      disabled={isBusy}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${filterBloodType === type ? "bg-rose-600 text-white" : isBusy ? "cursor-wait bg-slate-50 text-slate-600" : "cursor-pointer bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
                     >
                       {type === "All" ? "همه گروه‌ها" : type}
                     </button>
@@ -216,8 +217,8 @@ export default function DonorDashboard() {
               <select
                 value={filterProvince}
                 onChange={(e) => handleProvinceChange(e.target.value)}
-                disabled={isReserving}
-                className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs focus:border-rose-500 focus:outline-none ${isReserving ? "cursor-wait" : "cursor-pointer"}`}
+                disabled={isBusy}
+                className={`w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs focus:border-rose-500 focus:outline-none ${isBusy ? "cursor-wait" : "cursor-pointer"}`}
               >
                 <option value="All">همه استان‌ها</option>
                 {IRAN_PROVINCES.map((province) => (
@@ -241,7 +242,7 @@ export default function DonorDashboard() {
             <div className="group relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 p-2">
               <div
                 ref={mapContainerRef}
-                className={`iran-map-container w-full ${isReserving ? "iran-map-busy" : ""}`}
+                className={`iran-map-container w-full ${isBusy ? "iran-map-busy" : ""}`}
               >
                 <IranMap
                   key={filterProvince}
@@ -258,7 +259,7 @@ export default function DonorDashboard() {
                   selectedProvinceColor="#e11d48"
                   tooltipTitle=""
                   selectProvinceHandler={(province) => {
-                    if (isReserving || !province?.faName) return;
+                    if (isBusy || !province?.faName) return;
                     const newProvince =
                       filterProvince === province.faName
                         ? "All"
@@ -277,9 +278,9 @@ export default function DonorDashboard() {
                 </span>
                 {filterProvince !== "All" && (
                   <button
-                    onClick={() => !isReserving && handleProvinceChange("All")}
-                    disabled={isReserving}
-                    className={`text-[10px] font-bold text-rose-600 ${isReserving ? "cursor-wait" : "cursor-pointer hover:underline"}`}
+                    onClick={() => !isBusy && handleProvinceChange("All")}
+                    disabled={isBusy}
+                    className={`text-[10px] font-bold text-rose-600 ${isBusy ? "cursor-wait" : "cursor-pointer hover:underline"}`}
                   >
                     پاک کردن فیلتر
                   </button>
@@ -299,7 +300,9 @@ export default function DonorDashboard() {
             </span>
           </div>
 
-          {filteredNeeds?.length === 0 ? (
+          {isLoading ? (
+            <FilteredNeedsLoader />
+          ) : filteredNeeds?.length === 0 ? (
             <div className="flex flex-col items-center gap-4 rounded-3xl border border-slate-100 bg-white p-12 text-center shadow-sm">
               <span className="text-4xl">🔍</span>
               <h4 className="text-sm font-bold text-slate-900">
@@ -416,7 +419,7 @@ export default function DonorDashboard() {
                               "info",
                             ),
                           );
-                        } else if (!isReserving) {
+                        } else if (!isBusy) {
                           dispatch(
                             handleReserve(
                               need.id,
@@ -432,14 +435,14 @@ export default function DonorDashboard() {
                         }
                       }}
                       className={`mr-auto flex w-fit items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black transition-all ${
-                        isReserving
+                        isBusy
                           ? need.id === needId
                             ? "cursor-wait bg-rose-100 text-rose-500 shadow-sm"
                             : "cursor-not-allowed bg-rose-600 text-white shadow-md shadow-rose-600/10"
                           : "bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
                       }`}
                     >
-                      {isReserving && need.id === needId ? (
+                      {isBusy && need.id === needId ? (
                         <>
                           <span>در حال رزرو...</span>
                           <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>
