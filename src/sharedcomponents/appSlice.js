@@ -80,9 +80,6 @@ const appSlice = createSlice({
         state.reservations = action.payload.updatedReservations;
       },
     },
-    updateReservations(state, action) {
-      state.reservations = action.payload;
-    },
     setRegisterRole(state, action) {
       state.registerRole = action.payload;
     },
@@ -105,53 +102,6 @@ export function handleLogout(navigate) {
     navigate("/");
     dispatch(
       showToast("خروج از سیستم", "نشست شما با موفقیت خاتمه یافت.", "info"),
-    );
-  };
-}
-
-export function handleConfirmDonation(resId) {
-  return async function (dispatch, getState) {
-    dispatch(
-      updateReservations(
-        getState().app.reservations.map((r) => {
-          if (r.id === resId) {
-            return { ...r, status: "approved" };
-          }
-          return r;
-        }),
-      ),
-    );
-
-    dispatch(
-      showToast(
-        "تایید موفق اهدای خون",
-        `اهداکننده تایید گردید. فرد به علت اهدا، به مدت ۱ ماه در وضعیت نقاهت خواهد بود.`,
-        "success",
-      ),
-    );
-  };
-}
-
-export function handleResolveNeed() {
-  return async function (dispatch) {
-    // refetch needs from back
-    // dispatch(
-    //   updateNeeds(
-    //     getState().app.needs.map((need) => {
-    //       if (need.id === needId) {
-    //         return { ...need, status: "completed" };
-    //       }
-    //       return need;
-    //     }),
-    //   ),
-    // );
-
-    dispatch(
-      showToast(
-        "نیاز برطرف شد",
-        "وضعیت این درخواست به 'تکمیل شده' تغییر یافت و آرشیو شد.",
-        "success",
-      ),
     );
   };
 }
