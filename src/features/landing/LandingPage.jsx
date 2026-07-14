@@ -4,13 +4,28 @@ import { handleReserve, showToast } from "../../sharedcomponents/appSlice";
 import { useRequests } from "../../sharedcomponents/useRequests";
 import { useUserInfo } from "../../sharedcomponents/useUserInfo";
 import { useQueryClient } from "react-query";
+import { useEffect, useState } from "react";
+import PageLoader from "../../sharedcomponents/PageLoader";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
   const { isReserving } = useSelector((store) => store.app);
-  const { data: needs } = useRequests();
+  const { data: needs, isLoading } = useRequests();
   const { data: userInfo } = useUserInfo();
   const queryClient = useQueryClient();
+  const [needId, setNeedId] = useState(null);
+
+  useEffect(() => {
+    try {
+      queryClient.invalidateQueries({
+        queryKey: ["fetch_needs"],
+      });
+    } catch {
+      return <PageLoader variant={"landing"} />;
+    }
+  }, [queryClient]);
+
+  if (isLoading) return <PageLoader variant={"landing"} />;
 
   return (
     <div className="flex flex-col items-center gap-16 px-4 py-12 md:py-20">
@@ -25,10 +40,11 @@ export default function LandingPage() {
               اعلان اضطراری زمان واقعی:
             </span>
             <span className="hidden text-xs text-slate-500 lg:inline">
-              نیاز شدید به خون گروه {`${needs[0].blood_group}`} در{" "}
-              {`${needs[0].medical_center.name}`}{" "}
-              {`${needs[0].medical_center.province}`}. با اهدای فوری نجات‌دهنده
-              باشید!
+              نیاز شدید به خون گروه{" "}
+              {`${needs && needs[0] ? needs[0].blood_group : null}`} در{" "}
+              {`${needs && needs[0] ? needs[0].medical_center.name : null}`}{" "}
+              {`${needs && needs[0] ? needs[0].medical_center.province : null}`}
+              . با اهدای فوری نجات‌دهنده باشید!
             </span>
           </div>
           <Link
@@ -113,7 +129,6 @@ export default function LandingPage() {
               const percentLeft =
                 (need.remaining_capacity / need.total_capacity) * 100;
               const isCritical = need.remaining_capacity === 1;
-              const isClosed = need.remaining_capacity === 0;
 
               return (
                 <div
@@ -167,34 +182,38 @@ export default function LandingPage() {
                       <Link
                         to={`${!userInfo?.user?.role ? "/login" : ""}`}
                         onClick={() => {
-                          !userInfo?.user?.role
-                            ? dispatch(
-                                showToast(
-                                  "توجه",
-                                  "برای رزرو نوبت اهدای خون ابتدا وارد حساب کاربری خود شوید",
-                                  "info",
-                                ),
-                              )
-                            : !isReserving &&
-                              !isClosed &&
-                              dispatch(
-                                handleReserve(
-                                  need.id,
-                                  needs,
-                                  userInfo,
-                                  queryClient,
-                                ),
-                              );
+                          if (!userInfo?.user?.role) {
+                            dispatch(
+                              showToast(
+                                "توجه",
+                                "برای رزرو نوبت اهدای خون ابتدا وارد حساب کاربری خود شوید",
+                                "info",
+                              ),
+                            );
+                          } else if (!isReserving) {
+                            dispatch(
+                              handleReserve(
+                                need.id,
+                                need.blood_group,
+                                need.remaining_capacity,
+                                need.medical_center.name,
+                                "",
+                                userInfo,
+                                queryClient,
+                              ),
+                            );
+                            setNeedId(need.id);
+                          }
                         }}
                         className={`flex gap-2 rounded-xl px-4 py-2 text-xs font-extrabold transition-all ${
-                          isClosed
-                            ? "cursor-not-allowed bg-slate-100 text-slate-400 shadow-sm"
-                            : isReserving
+                          isReserving
+                            ? need.id === needId
                               ? "cursor-wait bg-rose-100 text-rose-500 shadow-sm"
-                              : "bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
+                              : "cursor-not-allowed bg-rose-600 text-white shadow-md shadow-rose-600/10"
+                            : "bg-rose-600 text-white shadow-md shadow-rose-600/10 hover:bg-rose-700 active:scale-95"
                         }`}
                       >
-                        {isReserving && !isClosed ? (
+                        {isReserving && need.id === needId ? (
                           <>
                             <span>در حال رزرو...</span>
                             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-rose-500 border-t-transparent"></span>
@@ -244,7 +263,7 @@ export default function LandingPage() {
             },
             {
               step: "۰۳",
-              title: "مراجعه مستقیم و اهدای حیات",
+              title: "مراجعه حضوری و اهدای حیات",
               desc: "اهداکننده با دریافت آدرس دقیق و شماره تلفن مستقیماً به مرکز درمانی مراجعه کرده و کادر درمان سلامت اهدا را تایید می‌کند.",
             },
           ].map((p, i) => (
@@ -280,7 +299,7 @@ export default function LandingPage() {
           },
           {
             label: "نیازهای فعال اورژانسی",
-            value: `${needs.length} درخواست`,
+            value: `${needs?.length} درخواست`,
             icon: "heart",
             bg: "bg-rose-50 text-rose-600",
           },
