@@ -199,6 +199,9 @@ function DonorsListPerRequest({ needId, isBusy, setIsConfirming }) {
   const { data: registeredDonors, isLoading } =
     useRegisteredDonorsRequest(needId);
   const queryClient = useQueryClient();
+  const hasDonor = registeredDonors?.find(
+    (res) => res.status === "pending" || res.status === "donated",
+  );
 
   async function handleConfirmDonation(resId) {
     try {
@@ -241,44 +244,48 @@ function DonorsListPerRequest({ needId, isBusy, setIsConfirming }) {
       </span>
       {isLoading ? (
         <ProfilesLoader />
-      ) : registeredDonors?.length === 0 ? (
+      ) : registeredDonors?.length === 0 || !hasDonor ? (
         <p className="text-[10px] text-slate-400 italic">
           هنوز داوطلبی ثبت‌نام نکرده است.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {registeredDonors?.map((res) => (
-            <div
-              key={res.id}
-              className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3"
-            >
-              <div className="flex flex-col gap-0.5 text-xs">
-                <span className="font-bold text-slate-800">
-                  {res.donor.first_name + " " + res.donor.last_name} (
-                  {res.donor.blood_group})
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  تلفن: {res.donor.mobile_number}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {res.status === "pending" ? (
-                  <button
-                    disabled={isBusy}
-                    onClick={() => handleConfirmDonation(res.id)}
-                    className={`rounded-lg bg-emerald-600 px-3 py-1.5 text-[10px] font-extrabold text-white transition-all hover:bg-emerald-700 ${isBusy ? "cursor-not-allowed" : "cursor-pointer"}`}
-                  >
-                    تایید اهدای خون بیمار
-                  </button>
-                ) : (
-                  <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800">
-                    ✓ خون داده شده
+          {registeredDonors?.map((res) =>
+            res.status === "cancelled" || res.status === "expired" ? null : (
+              <div
+                key={res.id}
+                className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3"
+              >
+                <div className="flex flex-col gap-0.5 text-xs">
+                  <span className="font-bold text-slate-800">
+                    {res.donor.first_name + " " + res.donor.last_name} (
+                    {res.donor.blood_group})
                   </span>
-                )}
+                  <span className="text-[10px] text-slate-400">
+                    تلفن: {res.donor.mobile_number}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {res.status === "pending" ? (
+                    <button
+                      disabled={isBusy}
+                      onClick={() => handleConfirmDonation(res.id)}
+                      className={`rounded-lg bg-emerald-600 px-3 py-1.5 text-[10px] font-extrabold text-white transition-all hover:bg-emerald-700 ${isBusy ? "cursor-not-allowed" : "cursor-pointer"}`}
+                    >
+                      تایید اهدای خون بیمار
+                    </button>
+                  ) : res.status === "donated" ? (
+                    <>
+                      <span className="rounded-lg bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800">
+                        ✓ خون داده شده
+                      </span>
+                    </>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          ))}
+            ),
+          )}
         </div>
       )}
     </div>
