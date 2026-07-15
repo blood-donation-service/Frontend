@@ -104,7 +104,6 @@ function Register() {
           ),
         );
       }
-      console.log(response.data.user.id);
       navigate("/login");
     } catch (error) {
       const duplicatedNationalCode = error.response?.data?.national_code

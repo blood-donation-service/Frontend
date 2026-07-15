@@ -1,22 +1,43 @@
-function CardSkeleton() {
+function Skeleton({ className = "" }) {
   return (
-    <div className="flex flex-col gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-sm">
-      <div className="flex items-start gap-3">
-        <div className="animate-skeleton-pulse h-12 w-12 shrink-0 rounded-2xl bg-slate-200/70" />
-        <div className="flex flex-1 flex-col gap-2">
-          <div className="animate-skeleton-pulse h-4 w-3/4 rounded-xl bg-slate-200/70" />
-          <div className="animate-skeleton-pulse h-3 w-1/2 rounded-xl bg-slate-200/70" />
+    <div
+      className={`animate-skeleton-pulse rounded-xl bg-slate-200/70 ${className}`}
+    />
+  );
+}
+
+function NeedCardSkeleton() {
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-slate-100 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 rounded-xl" />
+          <div className="flex flex-col gap-2">
+            <Skeleton className="h-4 w-56" />
+            <Skeleton className="h-3 w-40" />
+          </div>
         </div>
-        <div className="animate-skeleton-pulse h-5 w-16 rounded-lg bg-slate-200/70" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-6 w-20 rounded-lg" />
+          <Skeleton className="h-8 w-36 rounded-lg" />
+        </div>
       </div>
-      <div className="animate-skeleton-pulse h-2 w-full rounded-full bg-slate-200/70" />
-      <div className="flex flex-col gap-2 rounded-xl bg-slate-50 p-3">
-        <div className="animate-skeleton-pulse h-3 w-full rounded bg-slate-200/70" />
-        <div className="animate-skeleton-pulse h-3 w-2/3 rounded bg-slate-200/70" />
-      </div>
-      <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-        <div className="animate-skeleton-pulse h-3 w-32 rounded bg-slate-200/70" />
-        <div className="animate-skeleton-pulse h-9 w-36 rounded-xl bg-slate-200/70" />
+      <div className="flex flex-col gap-3 border-t border-slate-50 pt-4">
+        <Skeleton className="h-3 w-48" />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {[0, 1].map((j) => (
+            <div
+              key={j}
+              className="flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50 p-3"
+            >
+              <div className="flex flex-col gap-2">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-2.5 w-24" />
+              </div>
+              <Skeleton className="h-7 w-28 rounded-lg" />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -35,7 +56,7 @@ function BloodDropIcon({ className = "" }) {
   );
 }
 
-export default function FilteredNeedsLoader() {
+export default function ProfilesLoader() {
   return (
     <div className="animate-fade-in flex flex-col gap-6">
       <div className="relative flex flex-col items-center gap-6 overflow-hidden rounded-3xl border border-rose-100 bg-linear-to-b from-rose-50/60 via-white to-white p-10 shadow-sm">
@@ -65,7 +86,13 @@ export default function FilteredNeedsLoader() {
             preserveAspectRatio="none"
           >
             <defs>
-              <linearGradient id="ekg-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id="profiles-ekg-grad"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
                 <stop offset="0%" stopColor="#fecdd3" />
                 <stop offset="50%" stopColor="#e11d48" />
                 <stop offset="100%" stopColor="#fecdd3" />
@@ -86,7 +113,7 @@ export default function FilteredNeedsLoader() {
             <path
               d="M0,20 L40,20 L48,12 L56,28 L64,8 L72,32 L80,20 L120,20 L128,14 L136,26 L144,6 L152,34 L160,20 L200,20 L208,17 L240,20"
               fill="none"
-              stroke="url(#ekg-grad)"
+              stroke="url(#profiles-ekg-grad)"
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -96,7 +123,7 @@ export default function FilteredNeedsLoader() {
 
         <div className="text-center">
           <h4 className="text-sm font-black text-slate-900">
-            در حال جستجو در درخواست‌ها
+            در حال بارگذاری درخواست‌ها
           </h4>
           <p className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-400">
             <span>لطفاً چند لحظه صبر کنید</span>
@@ -115,8 +142,8 @@ export default function FilteredNeedsLoader() {
         </div>
       </div>
 
-      <CardSkeleton />
-      <CardSkeleton />
+      <NeedCardSkeleton />
+      <NeedCardSkeleton />
     </div>
   );
 }
