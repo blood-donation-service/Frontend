@@ -1,20 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import api from "../features/api/axios";
 
-const INITIAL_RESERVATIONS = [
-  {
-    id: "res-1",
-    medicalNeedId: "need-1",
-    donorId: "donor-1",
-    donorName: "احسان علوی",
-    donorPhone: "09123456789",
-    donorBloodType: "O+",
-    reservedQuantity: 1,
-    status: "registered",
-    createdAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-];
-
 function parseBloodType(type) {
   const rh = type.includes("+") ? "+" : "-";
   const abo = type.replace(/[+-]/, "");
@@ -23,8 +9,6 @@ function parseBloodType(type) {
 }
 
 const initialState = {
-  reservations: INITIAL_RESERVATIONS,
-
   isReserving: false,
 
   toasts: [],
@@ -42,86 +26,21 @@ const appSlice = createSlice({
     setIsReserving(state, action) {
       state.isReserving = action.payload;
     },
-    doReservation: {
-      prepare(updatedNeeds, updatedReservations) {
-        return {
-          payload: {
-            updatedNeeds,
-            updatedReservations,
-          },
-        };
-      },
-      reducer(state, action) {
-        // refetch needs from back
-        // state.needs = action.payload.updatedNeeds;
-        state.reservations = action.payload.updatedReservations;
-      },
-    },
     setRegisterRole(state, action) {
       state.registerRole = action.payload;
     },
   },
 });
 
-export const {
-  updateToasts,
-  setIsReserving,
-  specifyUserInfo,
-  doReservation,
-  updateReservations,
-  setRegisterRole,
-} = appSlice.actions;
+export const { updateToasts, setIsReserving, setRegisterRole } =
+  appSlice.actions;
 
 export function handleLogout(navigate) {
   return async function (dispatch) {
-    dispatch(specifyUserInfo(null));
+    // dispatch(specifyUserInfo(null));
     navigate("/");
     dispatch(
       showToast("خروج از سیستم", "نشست شما با موفقیت خاتمه یافت.", "info"),
-    );
-  };
-}
-
-export function handleCreateNeed(newNeedForm, navigate) {
-  return async function (dispatch) {
-    if (newNeedForm.quantityRequired <= 0) {
-      dispatch(
-        showToast(
-          "ظرفیت نامعتبر",
-          "ظرفیت درخواستی باید حداقل ۱ باشد.",
-          "error",
-        ),
-      );
-      return;
-    }
-    // refetch needs from back
-    // const centerId = userInfo?.user?.id || "CTR-110";
-    // const phone = userInfo?.profile?.mobile_number || "021-61190000";
-    // const address = "تهران، انتهای بلوار کشاورز";
-    // const hospitalName = "بیمارستان امام خمینی (مهمان)";
-    // const newNeed = {
-    //   id: "need-" + Date.now(),
-    //   title: newNeedForm.title,
-    //   centerId: centerId,
-    //   hospitalName: hospitalName,
-    //   needType: newNeedForm.needType,
-    //   bloodTypeRequired: newNeedForm.bloodTypeRequired,
-    //   quantityRequired: Number(newNeedForm.quantityRequired),
-    //   quantityRemaining: Number(newNeedForm.quantityRequired),
-    //   province: newNeedForm.province,
-    //   phone: phone,
-    //   address: address,
-    //   status: "active",
-    //   createdAt: new Date().toISOString(),
-    // };
-    // dispatch(updateNeeds([newNeed, ...getState().app.needs]));
-    navigate("/staff-dashboard");
-    dispatch(
-      showToast(
-        "ثبت درخواست جدید اورژانسی",
-        "درخواست شما بلافاصله در سامانه و داشبورد اهداکنندگان منتشر شد.",
-        "success",
-      ),
     );
   };
 }
