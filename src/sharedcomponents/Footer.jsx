@@ -17,7 +17,6 @@ export default function Footer() {
           <span>✓ کنترل دسترسی مبتنی بر نقش (RBAC)</span>
           <span>✓ پیشگیری تضمینی از Race Condition</span>
           <span>✓ تراکنش‌های اتمیک پایگاه‌داده (Pessimistic Locking)</span>
-          <span>✓ مدیریت دوره نقاهت خودکار داوطلبان</span>
         </div>
 
         <div className="flex flex-col gap-2 text-xs">

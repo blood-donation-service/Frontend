@@ -35,16 +35,6 @@ const appSlice = createSlice({
 export const { updateToasts, setIsReserving, setRegisterRole } =
   appSlice.actions;
 
-export function handleLogout(navigate) {
-  return async function (dispatch) {
-    // dispatch(specifyUserInfo(null));
-    navigate("/");
-    dispatch(
-      showToast("خروج از سیستم", "نشست شما با موفقیت خاتمه یافت.", "info"),
-    );
-  };
-}
-
 export function showToast(title, message, type = "success") {
   const id = Date.now();
 

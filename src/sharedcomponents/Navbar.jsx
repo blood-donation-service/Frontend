@@ -1,13 +1,39 @@
 import { useDispatch } from "react-redux";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { handleLogout, setRegisterRole } from "./appSlice";
+import { useQueryClient } from "react-query";
+import { setIsReserving, setRegisterRole, showToast } from "./appSlice";
 import { useUserInfo } from "./useUserInfo";
+
+const TOKEN_STORAGE_KEY = "access_token";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const queryClient = useQueryClient();
   const { pathname } = useLocation();
-  const { data: userInfo } = useUserInfo();
+  const { data: userInfo, isLoading: isUserInfoLoading } = useUserInfo();
+
+  function handleLogout() {
+    document.cookie = `${TOKEN_STORAGE_KEY}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+
+    queryClient.removeQueries({ queryKey: ["fetch_user_info"] });
+    queryClient.cancelQueries({ queryKey: ["fetch_user_info"] });
+    queryClient.invalidateQueries({ queryKey: ["fetch_user_info"] });
+
+    queryClient.removeQueries({ queryKey: ["fetch_filtered_needs"] });
+    queryClient.removeQueries({ queryKey: ["fetch_needs"] });
+    queryClient.removeQueries({ queryKey: ["fetch_registered_donors"] });
+    queryClient.removeQueries({ queryKey: ["fetch_staff_requests"] });
+    queryClient.removeQueries({ queryKey: ["fetch_donor_profile"] });
+
+    dispatch(setIsReserving(false));
+
+    navigate("/");
+
+    dispatch(
+      showToast("خروج از سیستم", "نشست شما با موفقیت خاتمه یافت.", "info"),
+    );
+  }
 
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 shadow-sm backdrop-blur-md">
@@ -50,18 +76,24 @@ export default function Navbar() {
             >
               صفحه اصلی
             </NavLink>
-            <NavLink
-              to={"/donor-dashboard"}
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${pathname === "/donor-dashboard" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
-            >
-              لیست درخواست های اهدای خون
-            </NavLink>
-            <NavLink
-              to={"/staff-dashboard"}
-              className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${pathname === "/staff-dashboard" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
-            >
-              داشبورد کادر درمان
-            </NavLink>
+            {((userInfo?.user?.role && userInfo?.user?.role === "donor") ||
+              !userInfo) && (
+              <NavLink
+                to={"/donor-dashboard"}
+                className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${pathname === "/donor-dashboard" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
+              >
+                لیست درخواست های اهدای خون
+              </NavLink>
+            )}
+            {userInfo?.user?.role &&
+              userInfo?.user?.role === "medical_staff" && (
+                <NavLink
+                  to={"/staff-dashboard"}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${pathname === "/staff-dashboard" ? "bg-slate-100 text-slate-900" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"}`}
+                >
+                  داشبورد کادر درمان
+                </NavLink>
+              )}
             {userInfo?.user?.role && userInfo?.user?.role === "donor" && (
               <NavLink
                 to={"/donor-profile"}
@@ -73,7 +105,15 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-3">
-            {userInfo?.user?.role ? (
+            {isUserInfoLoading ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden flex-col gap-1.5 lg:flex">
+                  <div className="h-3 w-16 animate-pulse rounded-md bg-slate-200" />
+                  <div className="h-4 w-24 animate-pulse rounded-md bg-slate-200" />
+                </div>
+                <div className="h-8 w-20 animate-pulse rounded-xl bg-slate-100" />
+              </div>
+            ) : userInfo?.user?.role ? (
               <div className="flex items-center gap-3">
                 <div className="hidden flex-col text-left lg:flex">
                   <span className="text-right text-xs text-slate-400">
@@ -86,8 +126,8 @@ export default function Navbar() {
                   </span>
                 </div>
                 <button
-                  onClick={() => dispatch(handleLogout(navigate))}
-                  className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600"
+                  onClick={() => handleLogout()}
+                  className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 transition-all hover:border-rose-100 hover:bg-rose-50 hover:text-rose-600"
                 >
                   <span>خروج</span>
                   <svg
